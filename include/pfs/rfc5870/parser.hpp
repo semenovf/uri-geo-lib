@@ -7,19 +7,12 @@
 //      2020.07.10 Initial version
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "error.hpp"
-// #include <algorithm>
 #include <array>
-// #include <bitset>
+#include <bitset>
 #include <functional>
-// #include <iterator>
-// #include <memory>
 #include <string>
-// #include <type_traits>
-// #include <utility>
 #include <cassert>
 #include <locale>
-// #include <cstdlib>
 
 namespace pfs {
 namespace rfc5870 {
@@ -69,6 +62,26 @@ namespace rfc5870 {
  * insensitive, and lowercase is preferred.
  */
 
+enum parse_policy_flag {
+      lowercase_labeltext  // convert label text to lowercase
+    , parse_policy_count
+};
+
+using parse_policy_set = std::bitset<parse_policy_count>;
+
+inline parse_policy_set relaxed_policy ()
+{
+    parse_policy_set result;
+    return result;
+}
+
+inline parse_policy_set strict_policy ()
+{
+    parse_policy_set result;
+    result.set(lowercase_labeltext, true);
+    return result;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Simple API interface
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,6 +89,8 @@ template <typename _UserContext>
 class simple_api_interface: public _UserContext
 {
 public:
+    parse_policy_set policy = strict_policy();
+
     using number_type = typename _UserContext::number_type;
     using string_type = typename _UserContext::string_type;
 
@@ -106,6 +121,16 @@ inline bool is_equals_ignorecase (_CharT a, _CharT b)
 {
     auto loc = std::locale();
     return std::toupper(a, loc) == std::toupper(b, loc);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// to_lower
+////////////////////////////////////////////////////////////////////////////////
+template <typename _CharT>
+inline _CharT to_lower (_CharT ch)
+{
+    auto loc = std::locale();
+    return std::tolower(ch, loc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -150,27 +175,6 @@ inline bool compare_and_assign (_ForwardIterator & a, _ForwardIterator b)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// is_whitespace
-////////////////////////////////////////////////////////////////////////////////
-/**
- * @return @c true if character is one of the symbols:
- *      - space (%x20),
- *      - horizontal tab (%x09),
- *      - line feed or new line (%x0A),
- *      - carriage return (%x0D),
- *
- *      otherwise @c false.
- */
-// template <typename CharT>
-// inline bool is_whitespace (CharT ch)
-// {
-//     return (ch == CharT('\x20')
-//             || ch == CharT('\x09')
-//             || ch == CharT('\x0A')
-//             || ch == CharT('\x0D'));
-// }
-
-////////////////////////////////////////////////////////////////////////////////
 // is_digit
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -192,17 +196,28 @@ inline bool is_digit (CharT ch)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// is_digit
+// is_alpha
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @return @c true if character is an alpha decimal digit (A-Z / a-z),
- *      otherwise @c false.
+ * @return @c true if character is an alpha (A-Z / a-z), otherwise @c false.
  */
 template <typename CharT>
 inline bool is_alpha (CharT ch)
 {
     return ((ch >= CharT('\x41') && ch <= CharT('\x5A'))
             || (ch >= CharT('\x61') && ch <= CharT('\x7A')));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// is_alphanum
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @return @c true if character is an alpha or digit, otherwise @c false.
+ */
+template <typename CharT>
+inline bool is_alphanum (CharT ch)
+{
+    return is_alpha(ch) || is_digit(ch);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -248,26 +263,37 @@ inline bool is_p_unreserved (_CharT ch)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// is_unreserved
+// is_mark
 ////////////////////////////////////////////////////////////////////////////////
 /**
  * @return @c true if character is one of the characters:
- *      alphanum or mark ("-" / "_" / "." / "!" / "~" / "*" / "'" / "(" / ")")
+ *      "-" / "_" / "." / "!" / "~" / "*" / "'" / "(" / ")"
+ */
+template <typename _CharT>
+inline bool is_mark (_CharT ch)
+{
+    return (ch == _CharT('-')
+        || ch == _CharT('_')
+        || ch == _CharT('.')
+        || ch == _CharT('!')
+        || ch == _CharT('~')
+        || ch == _CharT('*')
+        || ch == _CharT('\'')
+        || ch == _CharT('(')
+        || ch == _CharT(')'));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// is_unreserved
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @return @c true if character is alphanum (@see is_alphanum) or
+ *      mark (@see is_mark).
  */
 template <typename _CharT>
 inline bool is_unreserved (_CharT ch)
 {
-    return (is_alpha(ch)
-            || is_digit(ch)
-            || ch == _CharT('-')
-            || ch == _CharT('_')
-            || ch == _CharT('.')
-            || ch == _CharT('!')
-            || ch == _CharT('~')
-            || ch == _CharT('*')
-            || ch == _CharT('\'')
-            || ch == _CharT('(')
-            || ch == _CharT(')'));
+    return (is_alphanum(ch) || is_mark(ch));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -321,7 +347,7 @@ bool advance_pct_encoded (_ForwardIterator & pos, _ForwardIterator last
     if (pos == last)
         return false;
 
-    _ForwardIterator p = pos;
+    auto p = pos;
     int index = 0;
     int16_t encoded_char = 0;
 
@@ -362,7 +388,7 @@ template <typename _ForwardIterator1, typename _ForwardIterator2>
 inline bool advance_sequence_ignorecase (_ForwardIterator1 & pos, _ForwardIterator1 last
         , _ForwardIterator2 first2, _ForwardIterator2 last2)
 {
-    _ForwardIterator1 p = pos;
+    auto p = pos;
 
     while (p != last && first2 != last2 && is_equals_ignorecase(*p++, *first2++))
         ;
@@ -411,10 +437,9 @@ bool advance_geo_scheme (_ForwardIterator & pos
 template <typename _ForwardIterator, typename _NumberType>
 bool advance_number (_ForwardIterator & pos, _ForwardIterator last
         , bool allow_negative_sign
-        , _NumberType * pnum
-        , error_code & ec)
+        , _NumberType * pnum)
 {
-    _ForwardIterator p = pos;
+    auto p = pos;
 
     if (p == last)
         return false;
@@ -482,10 +507,8 @@ bool advance_number (_ForwardIterator & pos, _ForwardIterator last
 
     double n = 0;
 
-    if (!strtoreal(n, numstr)) {
-        ec = make_error_code(errc::bad_number);
+    if (!strtoreal(n, numstr))
         return false;
-    }
 
     if (pnum)
         *pnum = n;
@@ -504,17 +527,16 @@ bool advance_number (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 bool advance_coordinates (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context
-        , error_code & ec)
+        , simple_api_interface<_UserContext> & context)
 {
-    _ForwardIterator p = pos;
+    auto p = pos;
 
     if (p == last)
         return false;
 
     typename simple_api_interface<_UserContext>::number_type coord;
 
-    if (!advance_number(p, last, true, & coord, ec))
+    if (!advance_number(p, last, true, & coord))
         return false;
 
     context.on_latitude(context, std::move(coord));
@@ -527,22 +549,19 @@ bool advance_coordinates (_ForwardIterator & pos, _ForwardIterator last
 
     ++p;
 
-    if (!advance_number(p, last, true, & coord, ec))
+    if (!advance_number(p, last, true, & coord))
         return false;
 
     context.on_longitude(context, std::move(coord));
 
     // Accepted short list
-    if (p == last)
-        return true;
-
-    // Accepted short list
-    if (*p != ',')
-        return true;
+    if (p == last || *p != ',') {
+        return compare_and_assign(pos, p);
+    }
 
     ++p;
 
-    if (!advance_number(p, last, true, & coord, ec))
+    if (!advance_number(p, last, true, & coord))
         return false;
 
     context.on_altitude(context, std::move(coord));
@@ -561,10 +580,11 @@ bool advance_coordinates (_ForwardIterator & pos, _ForwardIterator last
  * alphanum  = ALPHA / DIGIT
  */
 template <typename _ForwardIterator, typename _StringType>
-bool advance_labeltext (_ForwardIterator & pos, _ForwardIterator last
-        , _StringType * labeltext = nullptr)
+inline bool advance_labeltext (_ForwardIterator & pos, _ForwardIterator last
+    , bool lowercase
+    , _StringType * labeltext)
 {
-    _ForwardIterator p = pos;
+    auto p = pos;
 
     if (p == last)
         return false;
@@ -572,13 +592,24 @@ bool advance_labeltext (_ForwardIterator & pos, _ForwardIterator last
     if (!(*p == '-' || is_alpha(*p) || is_digit(*p)))
         return false;
 
+    if (labeltext) {
+        if (lowercase)
+            labeltext->push_back(to_lower(*p));
+        else
+            labeltext->push_back(*p);
+    }
+
     ++p;
 
-    while (p != last && (*p == '-' || is_alpha(*p) || is_digit(*p)))
+    while (p != last && (*p == '-' || is_alpha(*p) || is_digit(*p))) {
+        if (labeltext) {
+            if (lowercase)
+                labeltext->push_back(to_lower(*p));
+            else
+                labeltext->push_back(*p);
+        }
         ++p;
-
-    if (labeltext)
-        *labeltext = _StringType{pos, p};
+    }
 
     return compare_and_assign(pos, p);
 }
@@ -595,13 +626,12 @@ bool advance_labeltext (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 inline bool advance_crsp (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context
-        , error_code & /*ec*/)
+        , simple_api_interface<_UserContext> & context)
 {
     using string_type = typename simple_api_interface<_UserContext>::string_type;
     using char_type = typename std::remove_reference<decltype(*pos)>::type;
 
-    _ForwardIterator p = pos;
+    auto p = pos;
 
     if (p == last)
         return false;
@@ -619,7 +649,9 @@ inline bool advance_crsp (_ForwardIterator & pos, _ForwardIterator last
     } else {
         string_type crslabel;
 
-        if (!advance_labeltext(p, last, & crslabel))
+        auto lowercase = context.policy.test(lowercase_labeltext);
+
+        if (!advance_labeltext(p, last, lowercase, & crslabel))
             return false;
 
         context.on_crslabel(context, std::move(crslabel));
@@ -640,13 +672,12 @@ inline bool advance_crsp (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 inline bool advance_uncp (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context
-        , error_code & ec)
+        , simple_api_interface<_UserContext> & context)
 {
     using number_type = typename simple_api_interface<_UserContext>::number_type;
     using char_type = typename std::remove_reference<decltype(*pos)>::type;
 
-    _ForwardIterator p = pos;
+    auto p = pos;
 
     if (p == last)
         return false;
@@ -658,7 +689,7 @@ inline bool advance_uncp (_ForwardIterator & pos, _ForwardIterator last
 
     number_type uval;
 
-    if (!advance_number(p, last, false, & uval, ec))
+    if (!advance_number(p, last, false, & uval))
         return false;
 
     context.on_uval(context, std::move(uval));
@@ -685,28 +716,27 @@ template <typename _ForwardIterator, typename _StringType>
 inline bool advance_pvalue (_ForwardIterator & pos, _ForwardIterator last
         , _StringType * pvalue = nullptr)
 {
-    _ForwardIterator p = pos;
+    using char_type = typename std::remove_reference<decltype(*pos)>::type;
+
+    auto p = pos;
 
     if (p == last)
         return false;
 
-    auto last_pos = p;
+    int16_t encoded_char;
 
     while (p != last) {
         if (is_p_unreserved(*p) || is_unreserved(*p)) {
+            if (pvalue)
+                pvalue->push_back(*p);
             ++p;
-        } else if (*p == '%') {
-            ++p;
-
-            if (!advance_pct_encoded(p, last))
-                return false;
+        } else if (advance_pct_encoded(p, last, & encoded_char)) {
+            if (pvalue)
+                pvalue->push_back(static_cast<char_type>(encoded_char));
         } else {
             break;
         }
     }
-
-    if (pvalue)
-        *pvalue = _StringType{last_pos, p};
 
     return compare_and_assign(pos, p);
 }
@@ -715,28 +745,18 @@ inline bool advance_pvalue (_ForwardIterator & pos, _ForwardIterator last
 // advance_parameter
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief Advance by geo `uncp`.
+ * @brief Advance by parameter.
  *
  * @note Grammar
- * parameter     = ";" pname [ "=" pvalue ]
- * pname         = labeltext
- * pvalue        = 1*paramchar
- * paramchar     = p-unreserved / unreserved / pct-encoded
- * p-unreserved  = "[" / "]" / ":" / "&" / "+" / "$"
- * unreserved    = alphanum / mark
- * pct-encoded   = "%" HEXDIG HEXDIG
- * mark          = "-" / "_" / "." / "!" / "~" / "*" /
- *                 "'" / "(" / ")"
+ * parameter = ";" pname [ "=" pvalue ]
  */
 template <typename _ForwardIterator, typename _UserContext>
 inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context
-        , error_code & ec)
+        , simple_api_interface<_UserContext> & context)
 {
     using string_type = typename simple_api_interface<_UserContext>::string_type;
-    using char_type = typename std::remove_reference<decltype(*pos)>::type;
 
-    _ForwardIterator p = pos;
+    auto p = pos;
 
     if (p == last)
         return false;
@@ -751,27 +771,25 @@ inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
 
     string_type pname;
 
-    if (!advance_labeltext(p, last, & pname))
+    auto lowercase = context.policy.test(lowercase_labeltext);
+
+    if (!advance_labeltext(p, last, lowercase, & pname))
         return false;
 
-    if (p == last)
-        return false;
-
-    if (*p != '=')
-        return false;
+    // pvalue is optional
+    if (p == last || *p != '=') {
+        context.on_parameter(context, std::move(pname), string_type{});
+        return compare_and_assign(pos, p);
+    }
 
     ++p;
 
-    if (p == last)
-        return false;
-
-    auto last_pos = p;
-
     string_type pvalue;
 
-    while (p != last) {
+    if (!advance_pvalue(p, last, & pvalue))
+        return false;
 
-    }
+    context.on_parameter(context, std::move(pname), std::move(pvalue));
 
     return compare_and_assign(pos, p);
 }
@@ -787,18 +805,19 @@ inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 inline bool advance_p (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context
-        , error_code & ec)
+        , simple_api_interface<_UserContext> & context)
 {
-    // Optional
-    advance_crsp(pos, last, context, ec);
+    if (pos != last) {
+        // Optional
+        advance_crsp(pos, last, context);
 
-    // Optional
-    advance_uncp(pos, last, context, ec);
+        // Optional
+        advance_uncp(pos, last, context);
 
-    // Optional
-    while (pos != last)
-        advance_parameter(pos, last, context, ec);
+        // Optional
+        while (pos != last)
+            advance_parameter(pos, last, context);
+    }
 
     return true;
 }
@@ -814,15 +833,14 @@ inline bool advance_p (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 bool advance_geo_path (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context
-        , error_code & ec)
+        , simple_api_interface<_UserContext> & context)
 {
-    _ForwardIterator p = pos;
+    auto p = pos;
 
-    if (!advance_coordinates(p, last, context, ec))
+    if (!advance_coordinates(p, last, context))
         return false;
 
-    if (!advance_p(p, last, context, ec))
+    if (!advance_p(p, last, context))
         return false;
 
     return compare_and_assign(pos, p);
@@ -839,10 +857,9 @@ bool advance_geo_path (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 bool advance_geo_uri (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context
-        , error_code & ec)
+        , simple_api_interface<_UserContext> & context)
 {
-    _ForwardIterator p = pos;
+    auto p = pos;
 
     if (!advance_geo_scheme(p, last))
         return false;
@@ -850,12 +867,12 @@ bool advance_geo_uri (_ForwardIterator & pos, _ForwardIterator last
     if (p == last)
         return false;
 
-    if (p != ':')
+    if (*p != ':')
         return false;
 
     ++p;
 
-    if (!advance_geo_path(p, last, context, ec))
+    if (!advance_geo_path(p, last, context))
         return false;
 
     return compare_and_assign(pos, p);
@@ -865,152 +882,16 @@ bool advance_geo_uri (_ForwardIterator & pos, _ForwardIterator last
 //
 ////////////////////////////////////////////////////////////////////////////////
 template <typename _ForwardIterator, typename _SimpleApiContext>
-inline _ForwardIterator parse (_ForwardIterator first
+inline auto parse (_ForwardIterator first
         , _ForwardIterator last
-        , _SimpleApiContext context)
+        , _SimpleApiContext context) -> _ForwardIterator
 {
-    _ForwardIterator pos = first;
+    auto pos = first;
 
     if (advance_geo_uri(pos, last, context))
         return pos;
 
     return first;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// parse_array
-////////////////////////////////////////////////////////////////////////////////
-// template <typename ForwardIterator, typename ArrayType>
-// typename std::enable_if<std::is_arithmetic<typename ArrayType::value_type>::value, ForwardIterator>::type
-// parse_array (ForwardIterator first
-//         , ForwardIterator last
-//         , parse_policy_set const & parse_policy
-//         , ArrayType & arr
-//         , error_code & ec)
-// {
-//     using value_type = typename ArrayType::value_type;
-//     //                   v----------No matter the string type here
-//     basic_callbacks<std::string, value_type> callbacks;
-//     callbacks.on_error  = [& ec] (error_code const & e) { ec = e; };
-//     callbacks.on_true   = [& arr] { arr.emplace_back(static_cast<value_type>(true)); };
-//     callbacks.on_false  = [& arr] { arr.emplace_back(static_cast<value_type>(false)); };
-//     callbacks.on_number = [& arr] (value_type && n) { arr.emplace_back(std::forward<value_type>(n)); };
-//     return parse(first, last, parse_policy, callbacks);
-// }
-//
-// template <typename StringType>
-// struct is_string;
-//
-// template <>
-// struct is_string<std::string> : std::integral_constant<bool, true> {};
-//
-// template <typename ForwardIterator, typename ArrayType>
-// typename std::enable_if<is_string<typename ArrayType::value_type>::value, ForwardIterator>::type
-// parse_array (ForwardIterator first
-//         , ForwardIterator last
-//         , parse_policy_set const & parse_policy
-//         , ArrayType & arr
-//         , error_code & ec)
-// {
-//     using string_type = typename ArrayType::value_type;
-//     //                            v------------ No matter the number type here
-//     basic_callbacks<string_type, int> callbacks;
-//     callbacks.on_error  = [& ec] (error_code const & e) { ec = e; };
-//     callbacks.on_string = [& arr] (string_type && s) {
-//         arr.emplace_back(std::forward<string_type>(s));
-//     };
-//     return parse(first, last, parse_policy, callbacks);
-// }
-//
-// template <typename ForwardIterator, typename ArrayType>
-// inline ForwardIterator parse_array (ForwardIterator first
-//         , ForwardIterator last
-//         , ArrayType & arr
-//         , error_code & ec)
-// {
-//     return parse_array(first, last, default_policy(), arr, ec);
-// }
-//
-// template <typename ForwardIterator, typename ArrayType>
-// inline ForwardIterator parse_array (ForwardIterator first
-//         , ForwardIterator last
-//         , ArrayType & arr)
-// {
-//     error_code ec;
-//     auto pos = parse_array(first, last, arr, ec);
-//     if (ec)
-//         throw std::system_error(ec);
-//     return pos;
-// }
-
-////////////////////////////////////////////////////////////////////////////////
-// parse_object
-////////////////////////////////////////////////////////////////////////////////
-// template <typename ForwardIterator, typename ObjectType>
-// typename std::enable_if<is_string<typename ObjectType::key_type>::value
-//         && std::is_arithmetic<typename ObjectType::mapped_type>::value, ForwardIterator>::type
-// parse_object (ForwardIterator first
-//         , ForwardIterator last
-//         , parse_policy_set const & parse_policy
-//         , ObjectType & obj
-//         , error_code & ec)
-// {
-//     using value_type = typename ObjectType::mapped_type;
-//     using string_type = typename ObjectType::key_type;
-//
-//     basic_callbacks<string_type, value_type> callbacks;
-//     string_type member_name;
-//
-//     callbacks.on_error  = [& ec] (error_code const & e) { ec = e; };
-//     callbacks.on_member_name  = [& member_name] (string_type && name) { member_name = std::move(name); };
-//     callbacks.on_true   = [& obj, & member_name] { obj[member_name] = true; };
-//     callbacks.on_false  = [& obj, & member_name] { obj[member_name] = false; };
-//     callbacks.on_number = [& obj, & member_name] (value_type && n) { obj[member_name] = std::forward<value_type>(n); };
-//     return parse(first, last, parse_policy, callbacks);
-// }
-//
-// template <typename ForwardIterator, typename ObjectType>
-// typename std::enable_if<is_string<typename ObjectType::key_type>::value
-//         && is_string<typename ObjectType::mapped_type>::value, ForwardIterator>::type
-// parse_object (ForwardIterator first
-//         , ForwardIterator last
-//         , parse_policy_set const & parse_policy
-//         , ObjectType & obj
-//         , error_code & ec)
-// {
-//     using value_type = typename ObjectType::mapped_type;
-//     using string_type = typename ObjectType::key_type;
-//
-//     basic_callbacks<string_type, value_type> callbacks;
-//     string_type member_name;
-//
-//     callbacks.on_error  = [& ec] (error_code const & e) { ec = e; };
-//     callbacks.on_member_name  = [& member_name] (string_type && name) { member_name = std::move(name); };
-//     callbacks.on_string = [& obj, & member_name] (string_type && s) {
-//             obj[member_name] = std::forward<string_type>(s);
-//     };
-//     return parse(first, last, parse_policy, callbacks);
-// }
-//
-// template <typename ForwardIterator, typename ObjectType>
-// inline ForwardIterator parse_object (ForwardIterator first
-//         , ForwardIterator last
-//         , ObjectType & obj
-//         , error_code & ec)
-// {
-//     return parse_object(first, last, default_policy(), obj, ec);
-// }
-//
-// template <typename ForwardIterator, typename ObjectType>
-// inline ForwardIterator parse_object (ForwardIterator first
-//         , ForwardIterator last
-//         , ObjectType & obj)
-// {
-//     error_code ec;
-//     auto pos = parse_object(first, last, obj, ec);
-//     if (ec)
-//         throw std::system_error(ec);
-//     return pos;
-// }
 
 }} // // namespace pfs::rfc5870
