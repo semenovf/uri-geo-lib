@@ -4,7 +4,7 @@
 // This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
 //
 // Changelog:
-//      2020.06.20 Initial version
+//      2020.07.10 Initial version
 ////////////////////////////////////////////////////////////////////////////////
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
@@ -44,25 +44,25 @@ struct geo_context
     number_type latitude {0};
     number_type longitude {0};
     number_type altitude {0};
-    string_type crslabel;
+    string_type crslabel {"wgs84"}; // is default CRS
     double uval {0};
     std::map<string_type, string_type> parameters;
 };
 
-geo::simple_api_interface<geo_context> make_geo_context ()
+geo::simple_api_interface<geo_context> make_geo_context (geo_context & c)
 {
-    geo::simple_api_interface<geo_context> ctx;
-    ctx.on_latitude  = [] (geo_context & ctx, double && n) { ctx.latitude  = n; };
-    ctx.on_longitude = [] (geo_context & ctx, double && n) { ctx.longitude = n; };
-    ctx.on_altitude  = [] (geo_context & ctx, double && n) { ctx.altitude  = n; };
-    ctx.on_crslabel  = [] (geo_context & ctx, std::string && s) {
-        ctx.crslabel = std::forward<std::string>(s);
+    geo::simple_api_interface<geo_context> ctx(c);
+    ctx.on_latitude  = [& c] (double && n) { c.latitude  = n; };
+    ctx.on_longitude = [& c] (double && n) { c.longitude = n; };
+    ctx.on_altitude  = [& c] (double && n) { c.altitude  = n; };
+    ctx.on_crslabel  = [& c] (std::string && s) {
+        c.crslabel = std::forward<std::string>(s);
     };
-    ctx.on_uval= [] (geo_context & ctx, double && n) {
-        ctx.uval = n;
+    ctx.on_uval = [& c] (double && n) {
+        c.uval = n;
     };
-    ctx.on_parameter = [] (geo_context & ctx, std::string && key, std::string && value) {
-        ctx.parameters.insert(std::make_pair(std::forward<std::string>(key)
+    ctx.on_parameter = [& c] (std::string && key, std::string && value) {
+        c.parameters.insert(std::make_pair(std::forward<std::string>(key)
             , std::forward<std::string>(value)));
     };
 
@@ -187,29 +187,32 @@ TEST_CASE("advance_number") {
 TEST_CASE("advance_coordinates") {
     {
         std::string sample{R"(48.2010,16.3695,183)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK(geo::advance_coordinates(pos, std::end(sample), ctx));
-        CHECK(ctx.latitude  == std::stod("48.2010"));
-        CHECK(ctx.longitude == std::stod("16.3695"));
-        CHECK(ctx.altitude  == std::stod("183"));
+        CHECK(c.latitude  == std::stod("48.2010"));
+        CHECK(c.longitude == std::stod("16.3695"));
+        CHECK(c.altitude  == std::stod("183"));
     }
 
     {
         std::string sample{R"(48.2010,16.3695)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK(geo::advance_coordinates(pos, std::end(sample), ctx));
-        CHECK(ctx.latitude  == std::stod("48.2010"));
-        CHECK(ctx.longitude == std::stod("16.3695"));
-        CHECK(ctx.altitude  == std::stod("0"));
+        CHECK(c.latitude  == std::stod("48.2010"));
+        CHECK(c.longitude == std::stod("16.3695"));
+        CHECK(c.altitude  == std::stod("0"));
     }
 
     {
         std::string sample{R"()"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_coordinates(pos, std::end(sample), ctx));
@@ -217,7 +220,8 @@ TEST_CASE("advance_coordinates") {
 
     {
         std::string sample{R"(48.2010)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_coordinates(pos, std::end(sample), ctx));
@@ -225,7 +229,8 @@ TEST_CASE("advance_coordinates") {
 
     {
         std::string sample{R"(48.2010,)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_coordinates(pos, std::end(sample), ctx));
@@ -233,7 +238,8 @@ TEST_CASE("advance_coordinates") {
 
     {
         std::string sample{R"(48.2010,16.3695,)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_coordinates(pos, std::end(sample), ctx));
@@ -279,35 +285,39 @@ TEST_CASE("advance_labeltext") {
 TEST_CASE("advance_crsp") {
     {
         std::string sample{R"(;crs=wgs84)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK(geo::advance_crsp(pos, std::end(sample), ctx));
-        CHECK(ctx.crslabel == "wgs84");
+        CHECK(c.crslabel == "wgs84");
     }
 
     {
         std::string sample{R"(;crs=WgS84)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK(geo::advance_crsp(pos, std::end(sample), ctx));
-        CHECK(ctx.crslabel == "wgs84");
+        CHECK(c.crslabel == "wgs84");
     }
 
     {
         std::string sample{R"(;crs=LABEL)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK(geo::advance_crsp(pos, std::end(sample), ctx));
-        CHECK(ctx.crslabel == "label");
+        CHECK(c.crslabel == "label");
     }
 
     // Empty
     {
         std::string sample{R"()"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_crsp(pos, std::end(sample), ctx));
@@ -316,7 +326,8 @@ TEST_CASE("advance_crsp") {
     //
     {
         std::string sample{R"(crs=wgs84)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_crsp(pos, std::end(sample), ctx));
@@ -325,7 +336,8 @@ TEST_CASE("advance_crsp") {
     // Bad crslabel
     {
         std::string sample{R"(;crs=+wgs84)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_crsp(pos, std::end(sample), ctx));
@@ -335,16 +347,18 @@ TEST_CASE("advance_crsp") {
 TEST_CASE("advance_uncp") {
     {
         std::string sample{R"(;u=123.456)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK(geo::advance_uncp(pos, std::end(sample), ctx));
-        CHECK(ctx.uval == std::stod("123.456"));
+        CHECK(c.uval == std::stod("123.456"));
     }
 
     {
         std::string sample{R"()"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_uncp(pos, std::end(sample), ctx));
@@ -352,7 +366,8 @@ TEST_CASE("advance_uncp") {
 
     {
         std::string sample{R"(;u=)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_uncp(pos, std::end(sample), ctx));
@@ -360,7 +375,8 @@ TEST_CASE("advance_uncp") {
 
     {
         std::string sample{R"(u=123.456)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_uncp(pos, std::end(sample), ctx));
@@ -368,7 +384,8 @@ TEST_CASE("advance_uncp") {
 
     {
         std::string sample{R"(u=123.)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(sample);
 
         CHECK_FALSE(geo::advance_uncp(pos, std::end(sample), ctx));
@@ -407,30 +424,33 @@ TEST_CASE("advance_pvalue") {
 TEST_CASE("advance_parameter") {
     {
         std::string s{R"(;pname)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(s);
 
         CHECK(geo::advance_parameter(pos, std::end(s), ctx));
-        REQUIRE(ctx.parameters.size() == 1);
-        CHECK(ctx.parameters.find("pname") != ctx.parameters.end());
-        CHECK(ctx.parameters["pname"] == "");
+        REQUIRE(c.parameters.size() == 1);
+        CHECK(c.parameters.find("pname") != c.parameters.end());
+        CHECK(c.parameters["pname"] == "");
     }
 
     {
         std::string s{R"(;pname=pvalue)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(s);
 
         CHECK(geo::advance_parameter(pos, std::end(s), ctx));
-        REQUIRE(ctx.parameters.size() == 1);
-        CHECK(ctx.parameters.find("pname") != ctx.parameters.end());
-        CHECK(ctx.parameters["pname"] == "pvalue");
+        REQUIRE(c.parameters.size() == 1);
+        CHECK(c.parameters.find("pname") != c.parameters.end());
+        CHECK(c.parameters["pname"] == "pvalue");
     }
 
     // Empty
     {
         std::string s{R"()"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(s);
 
         CHECK_FALSE(geo::advance_parameter(pos, std::end(s), ctx));
@@ -440,19 +460,21 @@ TEST_CASE("advance_parameter") {
 TEST_CASE("advance_p") {
     {
         std::string s{R"(;pname1=pvalue1;pname2=pvalue2)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(s);
 
         CHECK(geo::advance_p(pos, std::end(s), ctx));
-        REQUIRE(ctx.parameters.size()  == 2);
-        CHECK(ctx.parameters["pname1"] == "pvalue1");
-        CHECK(ctx.parameters["pname2"] == "pvalue2");
+        REQUIRE(c.parameters.size()  == 2);
+        CHECK(c.parameters["pname1"] == "pvalue1");
+        CHECK(c.parameters["pname2"] == "pvalue2");
         CHECK(pos == std::end(s));
     }
 
     {
         std::string s{R"()"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(s);
         CHECK(geo::advance_p(pos, std::end(s), ctx));
     }
@@ -461,46 +483,51 @@ TEST_CASE("advance_p") {
 TEST_CASE("advance_geo_uri") {
     {
         std::string s{R"(geo:13.4125,103.8667)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(s);
 
         CHECK(geo::advance_geo_uri(pos, std::end(s), ctx));
         CHECK(pos == std::end(s));
-        CHECK(ctx.latitude == std::stod("13.4125"));
-        CHECK(ctx.longitude == std::stod("103.8667"));
+        CHECK(c.latitude == std::stod("13.4125"));
+        CHECK(c.longitude == std::stod("103.8667"));
     }
 
     {
         std::string s{R"(geo:48.2010,-16.3695,183)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(s);
 
         CHECK(geo::advance_geo_uri(pos, std::end(s), ctx));
         CHECK(pos == std::end(s));
-        CHECK(ctx.latitude  == std::stod("48.2010"));
-        CHECK(ctx.longitude == std::stod("-16.3695"));
-        CHECK(ctx.altitude  == std::stod("183"));
+        CHECK(c.latitude  == std::stod("48.2010"));
+        CHECK(c.longitude == std::stod("-16.3695"));
+        CHECK(c.altitude  == std::stod("183"));
     }
 
     {
         std::string s{R"(geo:48.198634,16.371648;crs=wgs84;u=40)"};
-        auto ctx = make_geo_context();
+        geo_context c;
+        auto ctx = make_geo_context(c);
         auto pos = std::begin(s);
 
         CHECK(geo::advance_geo_uri(pos, std::end(s), ctx));
         CHECK(pos == std::end(s));
-        CHECK(ctx.latitude  == std::stod("48.198634"));
-        CHECK(ctx.longitude == std::stod("16.371648"));
-        CHECK(ctx.crslabel  == "wgs84");
-        CHECK(ctx.uval      == std::stod("40"));
+        CHECK(c.latitude  == std::stod("48.198634"));
+        CHECK(c.longitude == std::stod("16.371648"));
+        CHECK(c.crslabel  == "wgs84");
+        CHECK(c.uval      == std::stod("40"));
     }
 
     {
         std::string s1{R"(geo:66,30;u=6.500;FOo=this%2dthat;Bar)"};
         std::string s2{R"(geo:66.0,30;u=6.5;foo=this-that;bar)"};
 
-        auto ctx1 = make_geo_context();
-        auto ctx2 = make_geo_context();
+        geo_context c1;
+        geo_context c2;
+        auto ctx1 = make_geo_context(c1);
+        auto ctx2 = make_geo_context(c2);
         auto pos1 = std::begin(s1);
         auto pos2 = std::begin(s2);
 
@@ -510,22 +537,45 @@ TEST_CASE("advance_geo_uri") {
         CHECK(pos1 == std::end(s1));
         CHECK(pos2 == std::end(s2));
 
-        CHECK(ctx1.latitude  == ctx2.latitude);
-        CHECK(ctx1.longitude == ctx2.longitude);
-        CHECK(ctx1.uval == std::stod("6.5"));
-        CHECK(ctx1.uval == ctx2.uval);
+        CHECK(c1.latitude  == c2.latitude);
+        CHECK(c1.longitude == c2.longitude);
+        CHECK(c1.uval == std::stod("6.5"));
+        CHECK(c1.uval == c2.uval);
 
-        REQUIRE(ctx1.parameters.size() == 2);
-        REQUIRE(ctx2.parameters.size() == 2);
+        REQUIRE(c1.parameters.size() == 2);
+        REQUIRE(c2.parameters.size() == 2);
 
-        CHECK(ctx1.parameters.find("foo") != ctx1.parameters.end());
-        CHECK(ctx2.parameters.find("foo") != ctx2.parameters.end());
-        CHECK(ctx1.parameters["foo"] == "this-that");
-        CHECK(ctx2.parameters["foo"] == "this-that");
+        CHECK(c1.parameters.find("foo") != c1.parameters.end());
+        CHECK(c2.parameters.find("foo") != c2.parameters.end());
+        CHECK(c1.parameters["foo"] == "this-that");
+        CHECK(c2.parameters["foo"] == "this-that");
 
-        CHECK(ctx1.parameters.find("bar") != ctx1.parameters.end());
-        CHECK(ctx2.parameters.find("bar") != ctx2.parameters.end());
-        CHECK(ctx1.parameters["bar"].empty());
-        CHECK(ctx2.parameters["bar"].empty());
+        CHECK(c1.parameters.find("bar") != c1.parameters.end());
+        CHECK(c2.parameters.find("bar") != c2.parameters.end());
+        CHECK(c1.parameters["bar"].empty());
+        CHECK(c2.parameters["bar"].empty());
+    }
+
+    {
+        using geo_uri = geo::uri;
+
+        std::string s{R"(geo:66,30;u=6.500;FOo=this%2dthat;Bar)"};
+
+        geo_uri uri;
+        auto ctx = geo::make_context(uri);
+        auto pos = std::begin(s);
+        auto it = geo::parse(pos, std::end(s), ctx);
+        REQUIRE(it == std::end(s));
+
+        CHECK(uri.latitude()  == std::stod("66"));
+        CHECK(uri.longitude() == std::stod("30"));
+        CHECK_FALSE(uri.has_altitude());
+        CHECK(uri.uncertainty() == std::stod("6.5"));
+
+        REQUIRE(uri.count() == 2);
+        CHECK(uri.has_parameter("foo"));
+        CHECK(uri.parameter("foo") == "this-that");
+        CHECK(uri.has_parameter("bar"));
+        CHECK(uri.parameter("bar").empty());
     }
 }

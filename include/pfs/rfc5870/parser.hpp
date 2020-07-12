@@ -7,6 +7,7 @@
 //      2020.07.10 Initial version
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "geo.hpp"
 #include <array>
 #include <bitset>
 #include <functional>
@@ -86,31 +87,38 @@ inline parse_policy_set strict_policy ()
 // Simple API interface
 ////////////////////////////////////////////////////////////////////////////////
 template <typename _UserContext>
-class simple_api_interface: public _UserContext
+class simple_api_interface
 {
+    _UserContext & _context;
+
 public:
     parse_policy_set policy = strict_policy();
 
     using number_type = typename _UserContext::number_type;
     using string_type = typename _UserContext::string_type;
 
-    std::function<void(_UserContext &, number_type &&)> on_latitude
-        = [] (_UserContext &, number_type &&) {};
+public:
+    simple_api_interface (_UserContext & ctx) : _context(ctx)
+    {}
 
-    std::function<void(_UserContext &, number_type &&)> on_longitude
-        = [] (_UserContext &, number_type &&) {};
+    std::function<void(number_type &&)> on_latitude
+        = [] (number_type &&) {};
 
-    std::function<void(_UserContext &, number_type &&)> on_altitude
-        = [] (_UserContext &, number_type &&) {};
+    std::function<void(number_type &&)> on_longitude
+        = [] (number_type &&) {};
 
-    std::function<void(_UserContext &, string_type &&)> on_crslabel
-        = [] (_UserContext &, string_type &&) {};
+    std::function<void(number_type &&)> on_altitude
+        = [] (number_type &&) {};
 
-    std::function<void(_UserContext &, number_type &&)> on_uval
-        = [] (_UserContext &, number_type &&) {};
+    // Coordinate reference system (CRS)
+    std::function<void(string_type &&)> on_crslabel
+        = [] (string_type &&) {};
 
-    std::function<void(_UserContext &, string_type &&, string_type &&)> on_parameter
-        = [] (_UserContext &, string_type &&, string_type &&) {};
+    std::function<void(number_type &&)> on_uval
+        = [] (number_type &&) {};
+
+    std::function<void(string_type &&, string_type &&)> on_parameter
+        = [] (string_type &&, string_type &&) {};
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -539,7 +547,7 @@ bool advance_coordinates (_ForwardIterator & pos, _ForwardIterator last
     if (!advance_number(p, last, true, & coord))
         return false;
 
-    context.on_latitude(context, std::move(coord));
+    context.on_latitude(std::move(coord));
 
     if (p == last)
         return false;
@@ -552,7 +560,7 @@ bool advance_coordinates (_ForwardIterator & pos, _ForwardIterator last
     if (!advance_number(p, last, true, & coord))
         return false;
 
-    context.on_longitude(context, std::move(coord));
+    context.on_longitude(std::move(coord));
 
     // Accepted short list
     if (p == last || *p != ',') {
@@ -564,7 +572,7 @@ bool advance_coordinates (_ForwardIterator & pos, _ForwardIterator last
     if (!advance_number(p, last, true, & coord))
         return false;
 
-    context.on_altitude(context, std::move(coord));
+    context.on_altitude(std::move(coord));
 
     return compare_and_assign(pos, p);
 }
@@ -644,8 +652,7 @@ inline bool advance_crsp (_ForwardIterator & pos, _ForwardIterator last
     std::array<char_type, 5> wgs84 {'w', 'g', 's', '8', '4'};
 
     if (advance_sequence_ignorecase(p, last, std::begin(wgs84), std::end(wgs84))) {
-        context.on_crslabel(context
-            , string_type{std::begin(wgs84), std::end(wgs84)});
+        context.on_crslabel(string_type{std::begin(wgs84), std::end(wgs84)});
     } else {
         string_type crslabel;
 
@@ -654,7 +661,7 @@ inline bool advance_crsp (_ForwardIterator & pos, _ForwardIterator last
         if (!advance_labeltext(p, last, lowercase, & crslabel))
             return false;
 
-        context.on_crslabel(context, std::move(crslabel));
+        context.on_crslabel(std::move(crslabel));
     }
 
     return compare_and_assign(pos, p);
@@ -692,7 +699,7 @@ inline bool advance_uncp (_ForwardIterator & pos, _ForwardIterator last
     if (!advance_number(p, last, false, & uval))
         return false;
 
-    context.on_uval(context, std::move(uval));
+    context.on_uval(std::move(uval));
 
     return compare_and_assign(pos, p);
 }
@@ -778,7 +785,7 @@ inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
 
     // pvalue is optional
     if (p == last || *p != '=') {
-        context.on_parameter(context, std::move(pname), string_type{});
+        context.on_parameter(std::move(pname), string_type{});
         return compare_and_assign(pos, p);
     }
 
@@ -789,7 +796,7 @@ inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
     if (!advance_pvalue(p, last, & pvalue))
         return false;
 
-    context.on_parameter(context, std::move(pname), std::move(pvalue));
+    context.on_parameter(std::move(pname), std::move(pvalue));
 
     return compare_and_assign(pos, p);
 }
@@ -879,12 +886,12 @@ bool advance_geo_uri (_ForwardIterator & pos, _ForwardIterator last
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//
+// parse
 ////////////////////////////////////////////////////////////////////////////////
-template <typename _ForwardIterator, typename _SimpleApiContext>
+template <typename _ForwardIterator, typename _UserContext>
 inline auto parse (_ForwardIterator first
         , _ForwardIterator last
-        , _SimpleApiContext context) -> _ForwardIterator
+        , simple_api_interface<_UserContext> & context) -> _ForwardIterator
 {
     auto pos = first;
 
@@ -892,6 +899,46 @@ inline auto parse (_ForwardIterator first
         return pos;
 
     return first;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// make_context
+////////////////////////////////////////////////////////////////////////////////
+template <typename _GeoUri>
+simple_api_interface<_GeoUri> make_context (_GeoUri & uri
+    , parse_policy_set const & policy = strict_policy())
+{
+    using number_type = typename _GeoUri::number_type;
+    using string_type = typename _GeoUri::string_type;
+
+    simple_api_interface<_GeoUri> ctx(uri);
+    ctx.policy = policy;
+
+    ctx.on_latitude = [& uri] (number_type && n) {
+        uri.set_latitude(n);
+    };
+
+    ctx.on_longitude = [& uri] (number_type && n) {
+        uri.set_longitude(n);
+    };
+
+    ctx.on_altitude = [& uri] (number_type && n) {
+        uri.set_altitude(n);
+    };
+
+    ctx.on_crslabel = [& uri] (string_type && s) {
+        uri.set_crs(std::forward<string_type>(s));
+    };
+
+    ctx.on_uval = [& uri] (number_type && n) {
+        uri.set_uncertainty(n);
+    };
+
+    ctx.on_parameter = [& uri] (string_type && key, string_type && value) {
+        uri.insert(std::forward<string_type>(key), std::forward<string_type>(value));
+    };
+
+    return ctx;
 }
 
 }} // // namespace pfs::rfc5870

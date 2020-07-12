@@ -1,7 +1,8 @@
 project(pfs-rfc5870_TESTS)
 
 set(TEST_NAMES
-    parser)
+    parser
+    composer)
 
 foreach (name ${TEST_NAMES})
     if (${name}_SOURCES)
