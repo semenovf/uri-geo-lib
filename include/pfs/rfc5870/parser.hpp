@@ -904,6 +904,12 @@ inline auto parse (_ForwardIterator first
 ////////////////////////////////////////////////////////////////////////////////
 // make_context
 ////////////////////////////////////////////////////////////////////////////////
+/**
+ * Makes a context for parsing.
+ *
+ * @param uri Geo URI to store parsed data.
+ * @param policy Parsing policy.
+ */
 template <typename _GeoUri>
 simple_api_interface<_GeoUri> make_context (_GeoUri & uri
     , parse_policy_set const & policy = strict_policy())
