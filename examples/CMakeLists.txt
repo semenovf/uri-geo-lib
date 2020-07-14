@@ -1,8 +1,8 @@
 project(pfs-rfc5870_EXAMPLES)
 
 set(EXAMPLE_NAMES
-    parser)
-#     composer)
+    parser
+    custom_parser)
 
 foreach (name ${EXAMPLE_NAMES})
     if (${name}_SOURCES)

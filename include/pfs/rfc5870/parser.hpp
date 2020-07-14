@@ -87,19 +87,16 @@ inline parse_policy_set strict_policy ()
 // Simple API interface
 ////////////////////////////////////////////////////////////////////////////////
 template <typename _UserContext>
-class simple_api_interface
+struct simple_api_interface : public _UserContext
 {
-    _UserContext & _context;
-
-public:
-    parse_policy_set policy = strict_policy();
-
     using number_type = typename _UserContext::number_type;
     using string_type = typename _UserContext::string_type;
 
-public:
-    simple_api_interface (_UserContext & ctx) : _context(ctx)
-    {}
+    parse_policy_set policy = strict_policy();
+
+// public:
+//     simple_api_interface (/*_UserContext & ctx*/)// : _context(ctx)
+//     {}
 
     std::function<void(number_type &&)> on_latitude
         = [] (number_type &&) {};
@@ -917,7 +914,7 @@ simple_api_interface<_GeoUri> make_context (_GeoUri & uri
     using number_type = typename _GeoUri::number_type;
     using string_type = typename _GeoUri::string_type;
 
-    simple_api_interface<_GeoUri> ctx(uri);
+    simple_api_interface<_GeoUri> ctx;
     ctx.policy = policy;
 
     ctx.on_latitude = [& uri] (number_type && n) {
