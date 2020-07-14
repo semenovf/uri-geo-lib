@@ -1,17 +1,11 @@
-![logo](resources/pfs-rfc5870-black_512x512.png)
-
-[![Standard](https://img.shields.io/badge/C%2B%2B-11%2F14%2F17-blue)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://travis-ci.org/semenovf/pfs-rfc5870.svg?branch=master)](https://travis-ci.org/semenovf/pfs-rfc5870)
-
-# pfs-rfc5870
-A Uniform Resource Identifier for Geographic Locations (RFC5870) parser implementation
-
-## Parsing
-
-### Parsing using predefined structures
-
-```cpp
+////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2020 Vladislav Trifochkin
+//
+// This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+//
+// Changelog:
+//      2020.07.14 Initial version
+////////////////////////////////////////////////////////////////////////////////
 #include "pfs/rfc5870/parser.hpp"
 #include <iostream>
 #include <string>
@@ -53,9 +47,3 @@ int main ()
 
     return EXIT_SUCCESS;
 }
-```
-
-## Composing
-
-**Note**
-Logo made by [Vectors Market](https://www.flaticon.com/authors/vectors-market) from [www.flaticon.com](https://www.flaticon.com/)

@@ -8,18 +8,22 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "geo.hpp"
+#include <locale>
 #include <sstream>
 
 namespace pfs {
 namespace rfc5870 {
 
-template <typename _Ostream
+template <typename _OstreamType
     , typename _NumberType
     , typename _StringType
     , template <typename _Key, typename _Value> class _MapType>
-_Ostream & operator << (_Ostream & out, basic_uri<_NumberType, _StringType, _MapType> const & u)
+_OstreamType & operator << (_OstreamType & out
+    , basic_uri<_NumberType, _StringType, _MapType> const & u)
 {
     using string_type = _StringType;
+
+    auto saved_loc = out.imbue(std::locale("C"));
 
     out << "geo:" << u.latitude() << "," << u.longitude();
 
@@ -43,12 +47,21 @@ _Ostream & operator << (_Ostream & out, basic_uri<_NumberType, _StringType, _Map
         });
     }
 
+    // Restore locale
+    out.imbue(saved_loc);
     return out;
 }
 
 std::string compose (uri const & u)
 {
     std::ostringstream out;
+    out << u;
+    return out.str();
+}
+
+std::wstring compose (wuri const & u)
+{
+    std::wostringstream out;
     out << u;
     return out.str();
 }

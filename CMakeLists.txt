@@ -7,6 +7,7 @@ cmake_minimum_required (VERSION 3.5)
 project(pfs-rfc5870 CXX)
 
 option(${PROJECT_NAME}_BUILD_TESTS "Build tests" OFF)
+option(${PROJECT_NAME}_BUILD_EXAMPLES "Build examples" OFF)
 
 message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "C++ compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
@@ -21,4 +22,8 @@ target_include_directories(${PROJECT_NAME} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/i
 if (${PROJECT_NAME}_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+if (${PROJECT_NAME}_BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()

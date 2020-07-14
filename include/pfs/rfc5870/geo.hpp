@@ -24,6 +24,21 @@ inline void insert_map (map<_Key, _Value> & m, _Key && key, _Value && value)
         , std::forward<_Value>(value)));
 }
 
+template <typename _StringType>
+inline /*constexpr */_StringType wgs84_str ();
+
+template <>
+inline /*constexpr*/ std::string wgs84_str<std::string> ()
+{
+    return std::string{"wgs84"};
+}
+
+template <>
+inline /*constexpr*/ std::wstring wgs84_str<std::wstring> ()
+{
+    return std::wstring{L"wgs84"};
+}
+
 /**
  * Geo URI representation
  */
@@ -41,7 +56,7 @@ private:
     number_type _latitude  {0};
     number_type _longitude {0};
     std::pair<number_type, bool> _altitude  {0, false};
-    string_type _crslabel  {"wgs84"};
+    string_type _crslabel  {wgs84_str<string_type>()};
     std::pair<number_type, bool> _uval {0, false}; // Location Uncertainty
     parameters_type _parameters;
 
@@ -133,7 +148,7 @@ public:
      */
     bool is_wgs84 () const noexcept
     {
-        return _crslabel == string_type{"wgs84"};
+        return _crslabel == wgs84_str<string_type>();
     }
 
     /**
