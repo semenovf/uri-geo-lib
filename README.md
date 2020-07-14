@@ -167,6 +167,31 @@ This code outputs:
 geo:66,30,100;crs=ABC;u=6.5;bar;foo=val
 ```
 
+### For Qt users
+
+Qt supplementary header `pfs/rfc5870/qt_suppl.hpp` allow using QString as
+`string_type` for `pfs::rfc5870::basic_uri`.
+
+```cpp
+#include "pfs/rfc5870/composer.hpp"
+#include "pfs/rfc5870/qt_suppl.hpp"
+
+...
+
+int main ()
+{
+    geo::basic_uri<double, QString> uri;
+    uri.set_latitude(66.0f);
+    uri.set_longitude(30.0f);
+
+    ...
+
+    cout << uri << "\n";
+
+    return EXIT_SUCCESS;
+}
+```
+
 ## Notes
 
 Logo made by [Vectors Market](https://www.flaticon.com/authors/vectors-market) from [www.flaticon.com](https://www.flaticon.com/)<br/>

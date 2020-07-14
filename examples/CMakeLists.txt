@@ -5,6 +5,8 @@ set(EXAMPLE_NAMES
     custom_parser
     composer)
 
+find_package(Qt5Core)
+
 foreach (name ${EXAMPLE_NAMES})
     if (${name}_SOURCES)
         add_executable(example_${name} ${name}.cpp ${${name}_SOURCES})
@@ -12,5 +14,10 @@ foreach (name ${EXAMPLE_NAMES})
         add_executable(example_${name} ${name}.cpp)
     endif()
 
-    target_link_libraries(example_${name} PRIVATE pfs::rfc5870)
+    if (Qt5Core_FOUND)
+        target_compile_definitions(example_${name} PRIVATE HAVE_QT5_CORE)
+        target_link_libraries(example_${name} PRIVATE pfs::rfc5870 Qt5::Core)
+    else()
+        target_link_libraries(example_${name} PRIVATE pfs::rfc5870)
+    endif()
 endforeach()

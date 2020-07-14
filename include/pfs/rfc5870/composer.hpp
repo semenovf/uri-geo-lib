@@ -41,7 +41,7 @@ _OstreamType & operator << (_OstreamType & out
                 , string_type const & pvalue) {
             out << ";" << pname;
 
-            if (!pvalue.empty()) {
+            if (pvalue == string_type{}) {
                 out << "=" << pvalue;
             }
         });
