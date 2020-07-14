@@ -959,7 +959,11 @@ simple_api_interface<_GeoUri> make_context (_GeoUri & uri
 template <typename _ForwardIterator>
 inline bool like_geo_uri (_ForwardIterator first, _ForwardIterator last)
 {
-    return advance_geo_scheme(first, last);
+    if (advance_geo_scheme(first, last)) {
+        if (first != last && *first == ':')
+            return true;
+    }
+    return false;
 }
 
 /**

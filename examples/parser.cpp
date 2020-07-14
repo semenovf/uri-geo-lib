@@ -19,7 +19,7 @@ int main ()
     std::string s{R"(geo:66,30;u=6.500;FOo=this%2dthat;Bar)"};
 
     // Predict if `s` is geo URI representation
-    if (geo::like_geo_uri(s))
+    if (!geo::like_geo_uri(s))
         return EXIT_FAILURE;
 
     geo::uri uri;

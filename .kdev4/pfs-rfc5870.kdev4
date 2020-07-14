@@ -30,7 +30,7 @@ Name=Clang
 1=/home/wladt/ws/pfs-rfc5870/include
 
 [Launch]
-Launch Configurations=Launch Configuration 0
+Launch Configurations=Launch Configuration 0,Launch Configuration 1
 
 [Launch][Launch Configuration 0]
 Configured Launch Modes=execute
@@ -46,6 +46,24 @@ EnvironmentGroup=
 Executable=file:///home/wladt/ws/pfs-rfc5870
 External Terminal=konsole --noclose --workdir %workdir -e %exe
 Project Target=pfs-rfc5870,tests,parser
+Use External Terminal=false
+Working Directory=
+isExecutable=false
+
+[Launch][Launch Configuration 1]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=example_parser
+Type=Native Application
+
+[Launch][Launch Configuration 1][Data]
+Arguments=
+Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x03\x00\x00\x00\x16\x00p\x00f\x00s\x00-\x00r\x00f\x00c\x005\x008\x007\x000\x00\x00\x00\x10\x00e\x00x\x00a\x00m\x00p\x00l\x00e\x00s\x00\x00\x00\x1c\x00e\x00x\x00a\x00m\x00p\x00l\x00e\x00_\x00p\x00a\x00r\x00s\x00e\x00r)
+Dependency Action=Build
+EnvironmentGroup=
+Executable=file:///home/wladt/ws/pfs-rfc5870
+External Terminal=konsole --noclose --workdir %workdir -e %exe
+Project Target=pfs-rfc5870,examples,example_parser
 Use External Terminal=false
 Working Directory=
 isExecutable=false
