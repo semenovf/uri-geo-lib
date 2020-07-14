@@ -579,3 +579,29 @@ TEST_CASE("advance_geo_uri") {
         CHECK(uri.parameter("bar").empty());
     }
 }
+
+TEST_CASE("parsing failure") {
+    // Unique uncertainty requirement broken
+    {
+        geo::uri uri;
+        auto ctx = geo::make_context(uri);
+        REQUIRE_FALSE(geo::parse(std::string{R"(geo:66,30;crs=ABC;crs=DEF)"}, ctx));
+        REQUIRE(ctx.ec == geo::make_error_code(geo::errc::unique_crs_requirement_broken));
+    }
+
+    // Unique uncertainty requirement broken
+    {
+        geo::uri uri;
+        auto ctx = geo::make_context(uri);
+        REQUIRE_FALSE(geo::parse(std::string{R"(geo:66,30;u=6.500;u=3.4)"}, ctx));
+        REQUIRE(ctx.ec == geo::make_error_code(geo::errc::unique_uncertainty_requirement_broken));
+    }
+
+    // Uncertainty is out of order
+    {
+        geo::uri uri;
+        auto ctx = geo::make_context(uri);
+        REQUIRE_FALSE(geo::parse(std::string{R"(geo:66,30;u=6.500;crs=ABC)"}, ctx));
+        REQUIRE(ctx.ec == geo::make_error_code(geo::errc::uncertainty_out_of_order));
+    }
+}

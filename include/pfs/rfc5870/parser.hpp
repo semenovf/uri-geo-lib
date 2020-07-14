@@ -8,6 +8,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "geo.hpp"
+#include "error.hpp"
+#include <algorithm>
 #include <array>
 #include <bitset>
 #include <functional>
@@ -94,9 +96,14 @@ struct simple_api_interface : public _UserContext
 
     parse_policy_set policy = strict_policy();
 
-// public:
-//     simple_api_interface (/*_UserContext & ctx*/)// : _context(ctx)
-//     {}
+    enum parse_state_flag {
+          crs_counter
+        , u_counter
+        , parse_state_count
+    };
+
+    std::bitset<parse_state_count> parse_state_flags;
+    error_code ec;
 
     std::function<void(number_type &&)> on_latitude
         = [] (number_type &&) {};
@@ -117,16 +124,6 @@ struct simple_api_interface : public _UserContext
     std::function<void(string_type &&, string_type &&)> on_parameter
         = [] (string_type &&, string_type &&) {};
 };
-
-////////////////////////////////////////////////////////////////////////////////
-// is_equals_ignorecase
-////////////////////////////////////////////////////////////////////////////////
-template <typename _CharT>
-inline bool is_equals_ignorecase (_CharT a, _CharT b)
-{
-    auto loc = std::locale();
-    return std::toupper(a, loc) == std::toupper(b, loc);
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // to_lower
@@ -165,7 +162,7 @@ inline bool strtoreal (double & n, std::string const & numstr)
 ////////////////////////////////////////////////////////////////////////////////
 // compare_and_assign
 ////////////////////////////////////////////////////////////////////////////////
-/**
+/*
  * Helper function assigns @a b to @a a if @a a != @a b.
  */
 template <typename _ForwardIterator>
@@ -182,8 +179,8 @@ inline bool compare_and_assign (_ForwardIterator & a, _ForwardIterator b)
 ////////////////////////////////////////////////////////////////////////////////
 // is_digit
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @return @c true if character is a decimal digit (0..9), otherwise @c false.
+/*
+ * Returns `true` if character is a decimal digit (0..9).
  */
 template <typename CharT>
 inline bool is_digit (CharT ch)
@@ -203,8 +200,8 @@ inline bool is_digit (CharT ch)
 ////////////////////////////////////////////////////////////////////////////////
 // is_alpha
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @return @c true if character is an alpha (A-Z / a-z), otherwise @c false.
+/*
+ * Returns `true` if character is an alpha (A-Z / a-z).
  */
 template <typename CharT>
 inline bool is_alpha (CharT ch)
@@ -216,8 +213,8 @@ inline bool is_alpha (CharT ch)
 ////////////////////////////////////////////////////////////////////////////////
 // is_alphanum
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @return @c true if character is an alpha or digit, otherwise @c false.
+/*
+ * Returns `true` if character is an alpha or digit.
  */
 template <typename CharT>
 inline bool is_alphanum (CharT ch)
@@ -228,8 +225,8 @@ inline bool is_alphanum (CharT ch)
 ////////////////////////////////////////////////////////////////////////////////
 // is_hexdigit
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @return @c true if character is a hexadecimal digit (0..9A..Fa..f).
+/*
+ * Returns `true` if character is a hexadecimal digit (0..9A..Fa..f).
  */
 template <typename _CharT>
 inline bool is_hexdigit (_CharT ch)
@@ -252,8 +249,8 @@ inline bool is_hexdigit (_CharT ch)
 ////////////////////////////////////////////////////////////////////////////////
 // is_p_unreserved
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @return @c true if character is one of the characters:
+/*
+ * Returns `true` if character is one of the characters:
  *      "[" / "]" / ":" / "&" / "+" / "$"
  */
 template <typename _CharT>
@@ -270,8 +267,8 @@ inline bool is_p_unreserved (_CharT ch)
 ////////////////////////////////////////////////////////////////////////////////
 // is_mark
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @return @c true if character is one of the characters:
+/*
+ * Returns `true` if character is one of the characters:
  *      "-" / "_" / "." / "!" / "~" / "*" / "'" / "(" / ")"
  */
 template <typename _CharT>
@@ -291,9 +288,8 @@ inline bool is_mark (_CharT ch)
 ////////////////////////////////////////////////////////////////////////////////
 // is_unreserved
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @return @c true if character is alphanum (@see is_alphanum) or
- *      mark (@see is_mark).
+/*
+ * Returns `true` if character is alphanum (@see is_alphanum) or mark (@see is_mark).
  */
 template <typename _CharT>
 inline bool is_unreserved (_CharT ch)
@@ -304,8 +300,8 @@ inline bool is_unreserved (_CharT ch)
 ////////////////////////////////////////////////////////////////////////////////
 // to_digit
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @return Base-@a radix digit converted from character @a ch,
+/*
+ * Returns base-`radix` digit converted from character @a ch,
  *      or -1 if conversion is impossible. @a radix must be between 2 and 36
  *      inclusive.
  */
@@ -334,12 +330,34 @@ int to_digit (CharT ch, int radix = 10)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// compare_ignore_case
+////////////////////////////////////////////////////////////////////////////////
+/*
+ * Returns `true` if compared character sequences are equal.
+ */
+template <typename _ForwardIterator1, typename _ForwardIterator2>
+bool equal_ignore_case (_ForwardIterator1 first1, _ForwardIterator1 last1
+    , _ForwardIterator2 first2, _ForwardIterator2 last2)
+{
+    auto loc = std::locale();
+
+    while (first1 != last1 && first2 != last2
+            && std::tolower(*first1++, loc) == std::tolower(*first2++, loc))
+        ;
+
+    if (first1 == last1 && first2 == last2)
+        return true;
+
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // advance_pct_encoded
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance pct-encoded sequence.
+/*
+ * Advance pct-encoded sequence.
  *
- * @note Grammar
+ * Grammar:
  * pct-encoded = "%" HEXDIG HEXDIG
  */
 template <typename _ForwardIterator>
@@ -382,20 +400,18 @@ bool advance_pct_encoded (_ForwardIterator & pos, _ForwardIterator last
 // advance_sequence
 // Based on pfs/algo/advance.hpp:advance_sequence
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by sequence of charcters.
- * @param pos On input - first position, on output - last good position.
- * @param last End of sequence position.
- * @return @c true if advanced by all character sequence [first2, last2),
- *      otherwise returns @c false.
+/*
+ * Advance by sequence of characters ignoring cases.
  */
 template <typename _ForwardIterator1, typename _ForwardIterator2>
 inline bool advance_sequence_ignorecase (_ForwardIterator1 & pos, _ForwardIterator1 last
         , _ForwardIterator2 first2, _ForwardIterator2 last2)
 {
     auto p = pos;
+    auto loc = std::locale();
 
-    while (p != last && first2 != last2 && is_equals_ignorecase(*p++, *first2++))
+    while (p != last && first2 != last2
+            && std::tolower(*p++, loc) == std::tolower(*first2++, loc))
         ;
 
     if (first2 == last2) {
@@ -409,11 +425,11 @@ inline bool advance_sequence_ignorecase (_ForwardIterator1 & pos, _ForwardIterat
 ////////////////////////////////////////////////////////////////////////////////
 // advance_geo_scheme
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance geo scheme.
+/*
+ * Advance geo scheme.
  *
- * @note Grammar
- * geo-scheme    = "geo"
+ * Grammar:
+ * geo-scheme = "geo"
  */
 template <typename _ForwardIterator>
 bool advance_geo_scheme (_ForwardIterator & pos
@@ -432,10 +448,10 @@ bool advance_geo_scheme (_ForwardIterator & pos
 ////////////////////////////////////////////////////////////////////////////////
 // advance_number
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by number.
+/*
+ * Advance by number.
  *
- * @note Grammar
+ * Grammar:
  * num  = [ "-" ] pnum
  * pnum = 1*DIGIT [ "." 1*DIGIT ]
  */
@@ -524,10 +540,10 @@ bool advance_number (_ForwardIterator & pos, _ForwardIterator last
 ////////////////////////////////////////////////////////////////////////////////
 // advance_coordinates
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by coordinates.
+/*
+ * Advance by coordinates.
  *
- * @note Grammar
+ * Grammar:
  * coordinates = coord-a "," coord-b [ "," coord-c ]
  */
 template <typename _ForwardIterator, typename _UserContext>
@@ -577,10 +593,10 @@ bool advance_coordinates (_ForwardIterator & pos, _ForwardIterator last
 ////////////////////////////////////////////////////////////////////////////////
 // advance_labeltext
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by `labeltext`.
+/*
+ * Advance by `labeltext`.
  *
- * @note Grammar
+ * Grammar:
  * labeltext = 1*( alphanum / "-" )
  * alphanum  = ALPHA / DIGIT
  */
@@ -622,10 +638,10 @@ inline bool advance_labeltext (_ForwardIterator & pos, _ForwardIterator last
 ////////////////////////////////////////////////////////////////////////////////
 // advance_crsp
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by geo crsp.
+/*
+ * Advance by geo crsp.
  *
- * @note Grammar
+ * Grammar:
  * crsp     = ";crs=" crslabel
  * crslabel = "wgs84" / labeltext
  */
@@ -648,18 +664,19 @@ inline bool advance_crsp (_ForwardIterator & pos, _ForwardIterator last
 
     std::array<char_type, 5> wgs84 {'w', 'g', 's', '8', '4'};
 
-    if (advance_sequence_ignorecase(p, last, std::begin(wgs84), std::end(wgs84))) {
-        context.on_crslabel(string_type{std::begin(wgs84), std::end(wgs84)});
-    } else {
-        string_type crslabel;
+    string_type crslabel;
 
+    if (advance_sequence_ignorecase(p, last, std::begin(wgs84), std::end(wgs84))) {
+        crslabel = string_type{std::begin(wgs84), std::end(wgs84)};
+    } else {
         auto lowercase = context.policy.test(lowercase_labeltext);
 
         if (!advance_labeltext(p, last, lowercase, & crslabel))
             return false;
-
-        context.on_crslabel(std::move(crslabel));
     }
+
+    context.parse_state_flags.set(context.crs_counter);
+    context.on_crslabel(std::move(crslabel));
 
     return compare_and_assign(pos, p);
 }
@@ -667,10 +684,10 @@ inline bool advance_crsp (_ForwardIterator & pos, _ForwardIterator last
 ////////////////////////////////////////////////////////////////////////////////
 // advance_uncp
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by geo `uncp`.
+/*
+ * Advance by geo `uncp`.
  *
- * @note Grammar
+ * Grammar:
  * uncp = ";u=" uval
  * uval = pnum ; positive number
  */
@@ -696,6 +713,7 @@ inline bool advance_uncp (_ForwardIterator & pos, _ForwardIterator last
     if (!advance_number(p, last, false, & uval))
         return false;
 
+    context.parse_state_flags.set(context.u_counter);
     context.on_uval(std::move(uval));
 
     return compare_and_assign(pos, p);
@@ -704,10 +722,10 @@ inline bool advance_uncp (_ForwardIterator & pos, _ForwardIterator last
 ////////////////////////////////////////////////////////////////////////////////
 // advance_pvalue
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by parameter's value.
+/*
+ * Advance by parameter's value.
  *
- * @note Grammar
+ * Grammar:
  * pvalue        = 1*paramchar
  * paramchar     = p-unreserved / unreserved / pct-encoded
  * p-unreserved  = "[" / "]" / ":" / "&" / "+" / "$"
@@ -748,10 +766,10 @@ inline bool advance_pvalue (_ForwardIterator & pos, _ForwardIterator last
 ////////////////////////////////////////////////////////////////////////////////
 // advance_parameter
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by parameter.
+/*
+ * Advance by parameter.
  *
- * @note Grammar
+ * Grammar:
  * parameter = ";" pname [ "=" pvalue ]
  */
 template <typename _ForwardIterator, typename _UserContext>
@@ -759,6 +777,7 @@ inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
         , simple_api_interface<_UserContext> & context)
 {
     using string_type = typename simple_api_interface<_UserContext>::string_type;
+    using char_type = typename std::remove_reference<decltype(*pos)>::type;
 
     auto p = pos;
 
@@ -774,6 +793,7 @@ inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
         return false;
 
     string_type pname;
+    string_type pvalue;
 
     auto lowercase = context.policy.test(lowercase_labeltext);
 
@@ -781,30 +801,54 @@ inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
         return false;
 
     // pvalue is optional
-    if (p == last || *p != '=') {
-        context.on_parameter(std::move(pname), string_type{});
-        return compare_and_assign(pos, p);
+    if (p != last || *p == '=') {
+        ++p;
+
+        if (!advance_pvalue(p, last, & pvalue))
+            return false;
     }
 
-    ++p;
+    std::array<char_type, 1> u_name {'u'};
+    std::array<char_type, 3> crs_name {'c', 'r', 's'};
 
-    string_type pvalue;
+    if (equal_ignore_case(std::begin(pname), std::end(pname)
+            , std::begin(crs_name), std::end(crs_name))) {
+        // 3.3 URI Scheme Syntax
+        // 'crs' parameters MUST NOT appear more than once each.
+        if (context.parse_state_flags.test(context.crs_counter)) {
+            context.ec = make_error_code(errc::unique_crs_requirement_broken);
+            return false;
+        }
 
-    if (!advance_pvalue(p, last, & pvalue))
-        return false;
+        // 3.3 URI Scheme Syntax
+        // The 'crs' parameter MUST be given first if both 'crs' and 'u' are used
+        if (context.parse_state_flags.test(context.u_counter)) {
+            context.ec = make_error_code(errc::u_out_of_order);
+            return false;
+        }
+    }
+
+    if (equal_ignore_case(std::begin(pname), std::end(pname)
+            , std::begin(u_name), std::end(u_name))) {
+        // 3.3 URI Scheme Syntax
+        // 'u' parameters MUST NOT appear more than once each.
+        if (context.parse_state_flags.test(context.u_counter)) {
+            context.ec = make_error_code(errc::unique_u_requirement_broken);
+            return false;
+        }
+    }
 
     context.on_parameter(std::move(pname), std::move(pvalue));
-
     return compare_and_assign(pos, p);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // advance_p
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by geo extra properties.
+/*
+ * Advance by geo extra properties.
  *
- * @note Grammar
+ * Grammar:
  * p  = [ crsp ] [ uncp ] *parameter
  */
 template <typename _ForwardIterator, typename _UserContext>
@@ -819,20 +863,20 @@ inline bool advance_p (_ForwardIterator & pos, _ForwardIterator last
         advance_uncp(pos, last, context);
 
         // Optional
-        while (pos != last)
-            advance_parameter(pos, last, context);
+        while (pos != last && advance_parameter(pos, last, context))
+            ;
     }
 
-    return true;
+    return context.ec ? false : true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // advance_geo_path
 ////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief Advance by geo path.
+/*
+ * Advance by geo path.
  *
- * @note Grammar
+ * Grammar:
  * geo-path = coordinates p
  */
 template <typename _ForwardIterator, typename _UserContext>
@@ -854,10 +898,14 @@ bool advance_geo_path (_ForwardIterator & pos, _ForwardIterator last
 // advance_geo_uri
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief Advance by geo URI.
+ * Advance by Geo URI according to RFC-5870.
  *
- * @note Grammar
- * geo-URI = geo-scheme ":" geo-path
+ * @param pos[in,out] On input contains initial sequence position.
+ *      On output stores position after successful advance, or untouched otherwise.
+ * @param last[in] Contains last sequence position.
+ * @param context[in,out] Reference to parse context.
+ *
+ * @return @c true if advance is successful, @c false otherwise.
  */
 template <typename _ForwardIterator, typename _UserContext>
 bool advance_geo_uri (_ForwardIterator & pos, _ForwardIterator last
@@ -885,6 +933,15 @@ bool advance_geo_uri (_ForwardIterator & pos, _ForwardIterator last
 ////////////////////////////////////////////////////////////////////////////////
 // parse
 ////////////////////////////////////////////////////////////////////////////////
+/**
+ * Parses sequence for Geo URI according to RFC-5870.
+ *
+ * @param first[in] Iinitial sequence position.
+ * @param last[in] Last sequence position.
+ * @param context[in,out] Reference to parse context.
+ *
+ * @return Last successful sequence position.
+ */
 template <typename _ForwardIterator, typename _UserContext>
 inline auto parse (_ForwardIterator first
         , _ForwardIterator last
@@ -896,6 +953,25 @@ inline auto parse (_ForwardIterator first
         return pos;
 
     return first;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// parse
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * Parses sequence for Geo URI according to RFC-5870.
+ *
+ * @param s[in] Sequence.
+ * @param context[in,out] Reference to parse context.
+ *
+ * @return @c true if @a s contains valid geo URI according to RFC-5870,
+ *       @c false otherwise.
+ */
+template <typename _UserContext>
+inline bool parse (typename simple_api_interface<_UserContext>::string_type const & s
+        , simple_api_interface<_UserContext> & context)
+{
+    return parse(std::begin(s), std::end(s), context) == std::end(s);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -948,10 +1024,10 @@ simple_api_interface<_GeoUri> make_context (_GeoUri & uri
 // like_geo_uri
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * Attempt to predict if string may be a geo URI representation.
+ * Attempt to predict if string may be a Geo URI representation.
  *
- * @param first Start position of sequence for upcoming parsing of geo URI.
- * @param last  End position of sequence for upcoming parsing of geo URI.
+ * @param first Start position of sequence for upcoming parsing of Geo URI.
+ * @param last  End position of sequence for upcoming parsing of Geo URI.
  */
 template <typename _ForwardIterator>
 inline bool like_geo_uri (_ForwardIterator first, _ForwardIterator last)
@@ -964,9 +1040,9 @@ inline bool like_geo_uri (_ForwardIterator first, _ForwardIterator last)
 }
 
 /**
- * Attempt to predict if string may be a geo URI representation.
+ * Attempt to predict if string may be Geo URI representation.
  *
- * @param s String for upcoming parsing of geo URI.
+ * @param s String for upcoming parsing of Geo URI.
  */
 template <typename _StringType>
 inline bool like_geo_uri (_StringType const & s)
