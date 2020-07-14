@@ -947,4 +947,30 @@ simple_api_interface<_GeoUri> make_context (_GeoUri & uri
     return ctx;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// like_geo_uri
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * Attempt to predict if string may be a geo URI representation.
+ *
+ * @param first Start position of sequence for upcoming parsing of geo URI.
+ * @param last  End position of sequence for upcoming parsing of geo URI.
+ */
+template <typename _ForwardIterator>
+inline bool like_geo_uri (_ForwardIterator first, _ForwardIterator last)
+{
+    return advance_geo_scheme(first, last);
+}
+
+/**
+ * Attempt to predict if string may be a geo URI representation.
+ *
+ * @param s String for upcoming parsing of geo URI.
+ */
+template <typename _StringType>
+inline bool like_geo_uri (_StringType const & s)
+{
+    return like_geo_uri(std::begin(s), std::end(s));
+}
+
 }} // // namespace pfs::rfc5870
