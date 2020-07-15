@@ -24,19 +24,31 @@ inline void insert_map (map<_Key, _Value> & m, _Key && key, _Value && value)
         , std::forward<_Value>(value)));
 }
 
+// template <typename _StringType>
+// inline /*constexpr */_StringType wgs84_str ();
+//
+// template <>
+// inline /*constexpr*/ std::string wgs84_str<std::string> ()
+// {
+//     return std::string{"wgs84"};
+// }
+//
+// template <>
+// inline /*constexpr*/ std::wstring wgs84_str<std::wstring> ()
+// {
+//     return std::wstring{L"wgs84"};
+// }
+
 template <typename _StringType>
-inline /*constexpr */_StringType wgs84_str ();
-
-template <>
-inline /*constexpr*/ std::string wgs84_str<std::string> ()
+inline _StringType construct_string (std::initializer_list<char> const & il)
 {
-    return std::string{"wgs84"};
-}
+    _StringType result;
+    result.reserve(il.size());
 
-template <>
-inline /*constexpr*/ std::wstring wgs84_str<std::wstring> ()
-{
-    return std::wstring{L"wgs84"};
+    for (auto const & ch: il)
+        result.push_back(ch);
+
+    return result;
 }
 
 /**
@@ -56,9 +68,15 @@ private:
     number_type _latitude  {0};
     number_type _longitude {0};
     std::pair<number_type, bool> _altitude  {0, false};
-    string_type _crslabel  {wgs84_str<string_type>()};
+    string_type _crslabel  {wgs84_string()};
     std::pair<number_type, bool> _uval {0, false}; // Location Uncertainty
     parameters_type _parameters;
+
+private:
+    static string_type wgs84_string ()
+    {
+        return construct_string<string_type>({'w', 'g', 's', '8', '4'});
+    }
 
 public:
     /**
@@ -148,7 +166,7 @@ public:
      */
     bool is_wgs84 () const noexcept
     {
-        return _crslabel == wgs84_str<string_type>();
+        return _crslabel == wgs84_string();
     }
 
     /**

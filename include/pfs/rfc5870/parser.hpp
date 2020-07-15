@@ -983,14 +983,14 @@ inline bool parse (typename simple_api_interface<_UserContext>::string_type cons
  * @param uri Geo URI to store parsed data.
  * @param policy Parsing policy.
  */
-template <typename _GeoUri>
-simple_api_interface<_GeoUri> make_context (_GeoUri & uri
+template <typename _GeoUriType>
+simple_api_interface<_GeoUriType> make_context (_GeoUriType & uri
     , parse_policy_set const & policy = strict_policy())
 {
-    using number_type = typename _GeoUri::number_type;
-    using string_type = typename _GeoUri::string_type;
+    using number_type = typename _GeoUriType::number_type;
+    using string_type = typename _GeoUriType::string_type;
 
-    simple_api_interface<_GeoUri> ctx;
+    simple_api_interface<_GeoUriType> ctx;
     ctx.policy = policy;
 
     ctx.on_latitude = [& uri] (number_type && n) {

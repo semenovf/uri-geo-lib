@@ -187,6 +187,11 @@ int main ()
     ...
 
     cout << uri << "\n";
+    // or
+    wcout << uri << "\n";
+    // or
+    QTextStream stream(stdout);
+    stream << uri << "\n";
 
     return EXIT_SUCCESS;
 }

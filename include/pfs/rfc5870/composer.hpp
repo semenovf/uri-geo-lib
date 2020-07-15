@@ -9,10 +9,29 @@
 #pragma once
 #include "geo.hpp"
 #include <locale>
+#include <ostream>
 #include <sstream>
 
 namespace pfs {
 namespace rfc5870 {
+
+template <typename _OstreamType>
+class imbue_C_guard
+{
+    std::locale _saved_loc;
+    _OstreamType & _out;
+
+public:
+    imbue_C_guard (_OstreamType & out) : _out(out)
+    {
+        _saved_loc = _out.imbue(std::locale("C"));
+    }
+
+    ~imbue_C_guard ()
+    {
+        _out.imbue(_saved_loc);
+    }
+};
 
 template <typename _OstreamType
     , typename _NumberType
@@ -23,7 +42,8 @@ _OstreamType & operator << (_OstreamType & out
 {
     using string_type = _StringType;
 
-    auto saved_loc = out.imbue(std::locale("C"));
+    // Need "C" locale for numbers output
+    imbue_C_guard<_OstreamType>{out};
 
     out << "geo:" << u.latitude() << "," << u.longitude();
 
@@ -41,14 +61,12 @@ _OstreamType & operator << (_OstreamType & out
                 , string_type const & pvalue) {
             out << ";" << pname;
 
-            if (pvalue == string_type{}) {
+            if (pvalue != string_type{}) {
                 out << "=" << pvalue;
             }
         });
     }
 
-    // Restore locale
-    out.imbue(saved_loc);
     return out;
 }
 
