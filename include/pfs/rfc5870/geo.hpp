@@ -24,21 +24,6 @@ inline void insert_map (map<_Key, _Value> & m, _Key && key, _Value && value)
         , std::forward<_Value>(value)));
 }
 
-// template <typename _StringType>
-// inline /*constexpr */_StringType wgs84_str ();
-//
-// template <>
-// inline /*constexpr*/ std::string wgs84_str<std::string> ()
-// {
-//     return std::string{"wgs84"};
-// }
-//
-// template <>
-// inline /*constexpr*/ std::wstring wgs84_str<std::wstring> ()
-// {
-//     return std::wstring{L"wgs84"};
-// }
-
 template <typename _StringType>
 inline _StringType construct_string (std::initializer_list<char> const & il)
 {

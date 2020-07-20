@@ -28,7 +28,7 @@ int main ()
     if (!geo::like_geo_uri(s))
         return EXIT_FAILURE;
 
-    geo::simple_api_interface<custom_context> ctx;
+    geo::parser_interface<custom_context> ctx;
     ctx.on_latitude  = [] (double && n) { cout << "Latitude: " << n << "\n"; };
     ctx.on_longitude = [] (double && n) { cout << "Longitude: " << n << "\n"; };
     ctx.on_altitude  = [] (double && n) { cout << "Altitude: " << n << "\n"; };

@@ -49,9 +49,9 @@ struct geo_context
     std::map<string_type, string_type> parameters;
 };
 
-geo::simple_api_interface<geo_context> make_custom_context (geo_context & c)
+geo::parser_interface<geo_context> make_custom_context (geo_context & c)
 {
-    geo::simple_api_interface<geo_context> ctx;//(c);
+    geo::parser_interface<geo_context> ctx;//(c);
     ctx.on_latitude  = [& c] (double && n) { c.latitude  = n; };
     ctx.on_longitude = [& c] (double && n) { c.longitude = n; };
     ctx.on_altitude  = [& c] (double && n) { c.altitude  = n; };

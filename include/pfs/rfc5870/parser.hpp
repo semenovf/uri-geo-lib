@@ -86,10 +86,10 @@ inline parse_policy_set strict_policy ()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Simple API interface
+// Parser API interface
 ////////////////////////////////////////////////////////////////////////////////
 template <typename _UserContext>
-struct simple_api_interface : public _UserContext
+struct parser_interface : public _UserContext
 {
     using number_type = typename _UserContext::number_type;
     using string_type = typename _UserContext::string_type;
@@ -548,14 +548,14 @@ bool advance_number (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 bool advance_coordinates (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context)
+        , parser_interface<_UserContext> & context)
 {
     auto p = pos;
 
     if (p == last)
         return false;
 
-    typename simple_api_interface<_UserContext>::number_type coord;
+    typename parser_interface<_UserContext>::number_type coord;
 
     if (!advance_number(p, last, true, & coord))
         return false;
@@ -647,9 +647,9 @@ inline bool advance_labeltext (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 inline bool advance_crsp (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context)
+        , parser_interface<_UserContext> & context)
 {
-    using string_type = typename simple_api_interface<_UserContext>::string_type;
+    using string_type = typename parser_interface<_UserContext>::string_type;
     using char_type = typename std::remove_reference<decltype(*pos)>::type;
 
     auto p = pos;
@@ -693,9 +693,9 @@ inline bool advance_crsp (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 inline bool advance_uncp (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context)
+        , parser_interface<_UserContext> & context)
 {
-    using number_type = typename simple_api_interface<_UserContext>::number_type;
+    using number_type = typename parser_interface<_UserContext>::number_type;
     using char_type = typename std::remove_reference<decltype(*pos)>::type;
 
     auto p = pos;
@@ -774,9 +774,9 @@ inline bool advance_pvalue (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context)
+        , parser_interface<_UserContext> & context)
 {
-    using string_type = typename simple_api_interface<_UserContext>::string_type;
+    using string_type = typename parser_interface<_UserContext>::string_type;
     using char_type = typename std::remove_reference<decltype(*pos)>::type;
 
     auto p = pos;
@@ -853,7 +853,7 @@ inline bool advance_parameter (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 inline bool advance_p (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context)
+        , parser_interface<_UserContext> & context)
 {
     if (pos != last) {
         // Optional
@@ -881,7 +881,7 @@ inline bool advance_p (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 bool advance_geo_path (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context)
+        , parser_interface<_UserContext> & context)
 {
     auto p = pos;
 
@@ -909,7 +909,7 @@ bool advance_geo_path (_ForwardIterator & pos, _ForwardIterator last
  */
 template <typename _ForwardIterator, typename _UserContext>
 bool advance_geo_uri (_ForwardIterator & pos, _ForwardIterator last
-        , simple_api_interface<_UserContext> & context)
+        , parser_interface<_UserContext> & context)
 {
     auto p = pos;
 
@@ -945,7 +945,7 @@ bool advance_geo_uri (_ForwardIterator & pos, _ForwardIterator last
 template <typename _ForwardIterator, typename _UserContext>
 inline auto parse (_ForwardIterator first
         , _ForwardIterator last
-        , simple_api_interface<_UserContext> & context) -> _ForwardIterator
+        , parser_interface<_UserContext> & context) -> _ForwardIterator
 {
     auto pos = first;
 
@@ -968,8 +968,8 @@ inline auto parse (_ForwardIterator first
  *       @c false otherwise.
  */
 template <typename _UserContext>
-inline bool parse (typename simple_api_interface<_UserContext>::string_type const & s
-        , simple_api_interface<_UserContext> & context)
+inline bool parse (typename parser_interface<_UserContext>::string_type const & s
+        , parser_interface<_UserContext> & context)
 {
     return parse(std::begin(s), std::end(s), context) == std::end(s);
 }
@@ -984,13 +984,13 @@ inline bool parse (typename simple_api_interface<_UserContext>::string_type cons
  * @param policy Parsing policy.
  */
 template <typename _GeoUriType>
-simple_api_interface<_GeoUriType> make_context (_GeoUriType & uri
+parser_interface<_GeoUriType> make_context (_GeoUriType & uri
     , parse_policy_set const & policy = strict_policy())
 {
     using number_type = typename _GeoUriType::number_type;
     using string_type = typename _GeoUriType::string_type;
 
-    simple_api_interface<_GeoUriType> ctx;
+    parser_interface<_GeoUriType> ctx;
     ctx.policy = policy;
 
     ctx.on_latitude = [& uri] (number_type && n) {
