@@ -66,8 +66,8 @@ struct composer_interface
             out << s;
         };
 
-    std::function<ostream_type &(ostream_type &, string_type const &)> compose_property_value
-        = [] (ostream_type & out, string_type const & s) -> ostream_type & {
+    std::function<void(ostream_type &, string_type const &)> compose_property_value
+        = [] (ostream_type & out, string_type const & s) {
             out << s;
         };
 };
