@@ -5,7 +5,7 @@ set(EXAMPLE_NAMES
     custom_parser
     composer)
 
-find_package(Qt5Core)
+find_package(Qt5Core QUIET)
 
 foreach (name ${EXAMPLE_NAMES})
     if (${name}_SOURCES)
