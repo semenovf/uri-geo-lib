@@ -16,6 +16,7 @@
 #include <string>
 #include <cassert>
 #include <locale>
+#include <clocale>
 
 namespace pfs {
 namespace rfc5870 {
