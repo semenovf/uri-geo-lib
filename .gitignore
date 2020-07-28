@@ -1,22 +1,9 @@
 !.gitignore
 
-.settings/
 .build*/
-build*/
-.kdev4/
 .idea/
-.project
-.cproject
-doxygen/
-nbproject/
-src/tmp/
-
+build*/
 .coveralls.yml
-#Makefile
-#Makefile.*
-#makefile
-#makefile.*
-*.kdev4
 *.make
 *.mk
 *.exe
@@ -47,7 +34,25 @@ src/tmp/
 *.out
 *.app
 *.log
+
+# KDevelop specific directories and files
+.kdev4/
+*.kdev4
+
+# Qt specific directories and files
 moc_*.cpp
 qrc_*.cpp
-.sconsign.dblite
+
+# Doxygen specific directories and files
+doxygen/
 Doxyget.err
+
+# Visual Studio specific directories and files
+.vs/
+CMakeSettings.json
+
+# NetBeans/Eclipse specific directories and files
+.settings/
+nbproject/
+.project
+.cproject
