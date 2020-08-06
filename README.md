@@ -4,6 +4,7 @@
 [![License](resources/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Header Only](resources/badge/header-only.svg)](https://en.wikipedia.org/wiki/Header-only)
 [![Build Status](https://travis-ci.org/semenovf/pfs-rfc5870.svg?branch=master)](https://travis-ci.org/semenovf/pfs-rfc5870)
+[![Build status](https://ci.appveyor.com/api/projects/status/owogk328rraglcbp/branch/master?svg=true)](https://ci.appveyor.com/project/semenovf/pfs-rfc5870/branch/master)
 
 # pfs-rfc5870
 A Uniform Resource Identifier for Geographic Locations (RFC5870) parser implementation
