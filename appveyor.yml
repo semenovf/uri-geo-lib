@@ -126,7 +126,9 @@ install:
 before_build:
 
 build_script:
+  - echo Build configuration: "%configuration%" 
   - cmake --build . --config "%configuration%"
 
 test_script:
+  - echo Test configuration: "%configuration%" 
   - ctest -C "%configuration%" -V -j
