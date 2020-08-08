@@ -113,7 +113,7 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       configuration: Release
       platform: x64
-      CXX_FLAGS: ""
+      CXX_FLAGS: "/EHsc"
       CXX_STANDARD: 11
       LINKER_FLAGS: ""
       CMAKE_OPTIONS: ""
