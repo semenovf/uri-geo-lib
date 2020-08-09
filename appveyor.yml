@@ -25,6 +25,7 @@ environment:
       configuration: Release
       platform: x86
       CXX_FLAGS: ""
+      CXX_STANDARD: 11
       LINKER_FLAGS: ""
       CMAKE_OPTIONS: ""
       GENERATOR: Visual Studio 16 2019
