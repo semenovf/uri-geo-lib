@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2020 Vladislav Trifochkin
 //
-// This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+// This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
 //
 // Changelog:
 //      2020.07.12 Initial version
@@ -11,7 +11,8 @@
 #include <map>
 
 namespace pfs {
-namespace rfc5870 {
+namespace uri {
+namespace geo {
 
 template <typename _Key, typename _Value>
 using map = std::map<_Key, _Value>;
@@ -237,4 +238,4 @@ public:
 using uri = basic_uri<double, std::string>;
 using wuri = basic_uri<double, std::wstring>;
 
-}} // namespace pfs::rfc5870
+}}} // namespace pfs::uri::geo

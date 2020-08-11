@@ -1,12 +1,12 @@
-![logo](resources/pfs-rfc5870-black_64x64.png)
+![logo](resources/pfs-uri-geo-black_64x64.png)
 
 [![Standard](resources/badge/cxx-11-14-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![License](resources/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Header Only](resources/badge/header-only.svg)](https://en.wikipedia.org/wiki/Header-only)
-[![Build Status](https://travis-ci.org/semenovf/pfs-rfc5870.svg?branch=master)](https://travis-ci.org/semenovf/pfs-rfc5870)
-[![Build status](https://ci.appveyor.com/api/projects/status/owogk328rraglcbp/branch/master?svg=true)](https://ci.appveyor.com/project/semenovf/pfs-rfc5870/branch/master)
+[![Build Status](https://travis-ci.org/semenovf/pfs-uri-geo.svg?branch=master)](https://travis-ci.org/semenovf/pfs-uri-geo)
+[![Build status](https://ci.appveyor.com/api/projects/status/owogk328rraglcbp/branch/master?svg=true)](https://ci.appveyor.com/project/semenovf/pfs-uri-geo/branch/master)
 
-# pfs-rfc5870
+# pfs-uri-geo
 A Uniform Resource Identifier for Geographic Locations (RFC5870) parser implementation
 
 ## Parsing
@@ -14,13 +14,13 @@ A Uniform Resource Identifier for Geographic Locations (RFC5870) parser implemen
 ### Parsing using predefined structures
 
 ```cpp
-#include "pfs/rfc5870/parser.hpp"
+#include "pfs/uri/geo/parser.hpp"
 #include <iostream>
 #include <string>
 #include <cstdlib>
 
 using std::cout;
-namespace geo = pfs::rfc5870;
+namespace geo = pfs::uri::geo;
 
 int main ()
 {
@@ -82,13 +82,13 @@ true
 ### Parsing using custom callbacks
 
 ```cpp
-#include "pfs/rfc5870/parser.hpp"
+#include "pfs/uri/geo/parser.hpp"
 #include <iostream>
 #include <string>
 #include <cstdlib>
 
 using std::cout;
-namespace geo = pfs::rfc5870;
+namespace geo = pfs::uri::geo;
 
 struct custom_context
 {
@@ -138,12 +138,12 @@ bar: []
 ## Composing
 
 ```cpp
-#include "pfs/rfc5870/composer.hpp"
+#include "pfs/uri/geo/composer.hpp"
 #include <iostream>
 #include <cstdlib>
 
 using std::cout;
-namespace geo = pfs::rfc5870;
+namespace geo = pfs::uri::geo;
 
 int main ()
 {
@@ -170,12 +170,12 @@ geo:66,30,100;crs=ABC;u=6.5;bar;foo=val
 
 ### For Qt users
 
-Qt supplementary header `pfs/rfc5870/qt_suppl.hpp` allows using `QString` as
-string type for `pfs::rfc5870::basic_uri`.
+Qt supplementary header `pfs/uri/geo/qt_suppl.hpp` allows using `QString` as
+string type for `pfs::uri::geo::basic_uri`.
 
 ```cpp
-#include "pfs/rfc5870/composer.hpp"
-#include "pfs/rfc5870/qt_suppl.hpp"
+#include "pfs/uri/geo/composer.hpp"
+#include "pfs/uri/geo/qt_suppl.hpp"
 
 ...
 

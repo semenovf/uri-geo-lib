@@ -1,18 +1,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2020 Vladislav Trifochkin
 //
-// This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+// This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
 //
 // Changelog:
 //      2020.07.14 Initial version
 ////////////////////////////////////////////////////////////////////////////////
-#include "pfs/rfc5870/parser.hpp"
+#include "pfs/uri/geo/parser.hpp"
 #include <iostream>
 #include <string>
 #include <cstdlib>
 
 using std::cout;
-namespace geo = pfs::rfc5870;
+namespace geo = pfs::uri::geo;
 
 int main ()
 {

@@ -1,14 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2020 Vladislav Trifochkin
 //
-// This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+// This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
 //
 // Changelog:
 //      2020.07.10 Initial version
 ////////////////////////////////////////////////////////////////////////////////
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
-#include "pfs/rfc5870/parser.hpp"
+#include "pfs/uri/geo/parser.hpp"
 #include <string>
 #include <vector>
 #include <utility>
@@ -28,7 +28,7 @@ int compare_ignore_case (std::string const & a, std::string const & b)
 #endif
 }
 
-namespace geo = pfs::rfc5870;
+namespace geo = pfs::uri::geo;
 
 template <typename T>
 inline constexpr T * nullptr_value ()

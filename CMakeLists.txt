@@ -1,10 +1,10 @@
 ################################################################################
 # Copyright (c) 2020 Vladislav Trifochkin
 #
-# This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+# This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
 ################################################################################
 cmake_minimum_required (VERSION 3.5)
-project(pfs-rfc5870 VERSION 1.0 LANGUAGES CXX)
+project(pfs-uri-geo VERSION 1.0 LANGUAGES CXX)
 
 string(REPLACE "-" "::" _project_alias ${PROJECT_NAME})
 

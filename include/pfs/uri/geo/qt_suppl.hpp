@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2020 Vladislav Trifochkin
 //
-// This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+// This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
 //
 // Changelog:
 //      2020.07.14 Initial version
@@ -12,7 +12,8 @@
 #include <QTextStream>
 
 namespace pfs {
-namespace rfc5870 {
+namespace uri {
+namespace geo {
 
 template <>
 class imbue_C_guard<QTextStream>
@@ -45,6 +46,6 @@ inline std::wostream & operator << (std::wostream & out, QString const & s)
     return out;
 }
 
-}} // namespace pfs::rfc5870
+}}} // namespace pfs::uri::geo
 
 

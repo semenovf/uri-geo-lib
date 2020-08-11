@@ -1,4 +1,4 @@
-project(pfs-rfc5870_TESTS)
+project(pfs-uri-geo_TESTS)
 
 set(TEST_NAMES
     parser
@@ -11,6 +11,6 @@ foreach (name ${TEST_NAMES})
         add_executable(${name} ${name}.cpp)
     endif()
 
-    target_link_libraries(${name} PRIVATE pfs::rfc5870)
+    target_link_libraries(${name} PRIVATE pfs::uri::geo)
     add_test(NAME ${name} COMMAND ${name})
 endforeach()

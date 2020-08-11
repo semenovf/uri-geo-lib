@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2020 Vladislav Trifochkin
 //
-// This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+// This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
 //
 // Changelog:
 //      2020.07.10 Initial version
@@ -19,7 +19,8 @@
 #include <clocale>
 
 namespace pfs {
-namespace rfc5870 {
+namespace uri {
+namespace geo {
 
 /**
  * [RFC 5870](https://tools.ietf.org/html/rfc5870)
@@ -1051,4 +1052,4 @@ inline bool like_geo_uri (_StringType const & s)
     return like_geo_uri(std::begin(s), std::end(s));
 }
 
-}} // // namespace pfs::rfc5870
+}}} // namespace pfs::uri::geo

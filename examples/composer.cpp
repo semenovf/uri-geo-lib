@@ -1,21 +1,21 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2020 Vladislav Trifochkin
 //
-// This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+// This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
 //
 // Changelog:
 //      2020.07.14 Initial version
 ////////////////////////////////////////////////////////////////////////////////
-#include "pfs/rfc5870/composer.hpp"
+#include "pfs/uri/geo/composer.hpp"
 #include <iostream>
 #include <cstdlib>
 
 #if defined(HAVE_QT5_CORE)
-#   include "pfs/rfc5870/qt_suppl.hpp"
+#   include "pfs/uri/geo/qt_suppl.hpp"
 #endif
 
 using std::cout;
-namespace geo = pfs::rfc5870;
+namespace geo = pfs::uri::geo;
 
 template <typename _GeoUriType, typename _OstreamType>
 void composer_example (_OstreamType & out)

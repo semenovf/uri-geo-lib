@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2020 Vladislav Trifochkin
 //
-// This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+// This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
 //
 // Changelog:
 //      2020.07.12 Initial version
@@ -15,7 +15,8 @@
 #include <sstream>
 
 namespace pfs {
-namespace rfc5870 {
+namespace uri {
+namespace geo {
 
 enum class composer_policy_flag {
       ignore_wgs84_crs    //<! do not output CRS if it equals to WGS84
@@ -166,4 +167,4 @@ std::wstring compose (wuri const & u)
     return out.str();
 }
 
-}} // namespace pfs::rfc5870
+}}} // namespace pfs::uri::geo

@@ -1,4 +1,4 @@
-project(pfs-rfc5870_EXAMPLES)
+project(pfs-uri-geo_EXAMPLES)
 
 set(EXAMPLE_NAMES
     parser
@@ -16,8 +16,8 @@ foreach (name ${EXAMPLE_NAMES})
 
     if (Qt5Core_FOUND)
         target_compile_definitions(example_${name} PRIVATE HAVE_QT5_CORE)
-        target_link_libraries(example_${name} PRIVATE pfs::rfc5870 Qt5::Core)
+        target_link_libraries(example_${name} PRIVATE pfs::uri::geo Qt5::Core)
     else()
-        target_link_libraries(example_${name} PRIVATE pfs::rfc5870)
+        target_link_libraries(example_${name} PRIVATE pfs::uri::geo)
     endif()
 endforeach()

@@ -1,18 +1,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2020 Vladislav Trifochkin
 //
-// This file is part of [pfs-rfc5870](https://github.com/semenovf/pfs-rfc5870) library.
+// This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
 //
 // Changelog:
 //      2020.07.12 Initial version
 ////////////////////////////////////////////////////////////////////////////////
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
-#include "pfs/rfc5870/composer.hpp"
+#include "pfs/uri/geo/composer.hpp"
 #include <sstream>
 #include <iostream>
 
-namespace geo = pfs::rfc5870;
+namespace geo = pfs::uri::geo;
 
 TEST_CASE("composer") {
     {
