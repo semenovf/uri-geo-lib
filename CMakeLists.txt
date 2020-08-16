@@ -7,6 +7,7 @@ cmake_minimum_required (VERSION 3.5)
 project(pfs-uri-geo VERSION 1.0 LANGUAGES CXX)
 
 string(REPLACE "-" "::" _project_alias ${PROJECT_NAME})
+set(_project_basename ${PROJECT_NAME})
 
 option(${PROJECT_NAME}_BUILD_TESTS "Build tests" OFF)
 option(${PROJECT_NAME}_BUILD_EXAMPLES "Build examples" OFF)
