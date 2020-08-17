@@ -9,7 +9,7 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsemenovf%2Fpfs-uri-geo.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsemenovf%2Fpfs-uri-geo?ref=badge_shield)
 
 # pfs-uri-geo
-A Uniform Resource Identifier for Geographic Locations (RFC5870) parser implementation
+A Uniform Resource Identifier for Geographic Locations (RFC5870) parser/composer implementation
 
 ## Parsing
 

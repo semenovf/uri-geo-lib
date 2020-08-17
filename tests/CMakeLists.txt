@@ -1,39 +1,11 @@
+################################################################################
+# Copyright (c) 2020 Vladislav Trifochkin
+#
+# This file is part of [pfs-uri-geo](https://github.com/semenovf/pfs-uri-geo) library.
+################################################################################
 project(${_project_basename}_TESTS)
 
 option(${_project_basename}_ENABLE_COVERAGE "Build tests with coverage support" OFF)
-
-if (${_project_basename}_ENABLE_COVERAGE)
-    # Helpfull resources:
-    # 1. https://github.com/TheLartians/ModernCppStarter
-    # 2. https://github.com/bsamseth/cpp-project
-    # 3. https://github.com/eddyxu/cpp-coveralls
-    # 4. https://github.com/bilke/cmake-modules
-    # 5. https://github.com/JoakimSoderberg/coveralls-cmake
-    # 6. https://github.com/okkez/coveralls-lcov
-
-    message(STATUS "Coverage feature enabled")
-
-    if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang")
-            message(FATAL_ERROR "Coverage feature requires GCC or Clang")
-        endif()
-    endif()
-
-    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(WARNING "Code coverage results with an optimised (non-Debug) build may be misleading")
-    endif()
-
-#     find_program(GCOV_PATH gcov)
-#     find_program(LCOV_PATH lcov)
-#     find_program(GENHTML_PATH genhtml)
-#     find_program(GCOVR_PATH gcovr PATHS ${CMAKE_SOURCE_DIR}/tests)
-#     lcov --directory . --zerocounters
-#     ctest
-#     lcov --directory tests --capture --output-file COVERAGE.info
-#     lcov --remove COVERAGE.info '/usr/*' '*/doctest.h' --output-file COVERAGE.info.cleaned
-#     genhtml -o COVERAGE COVERAGE.info.cleaned
-#     lcov --list COVERAGE.info.cleaned
-endif()
 
 set(TEST_NAMES
     parser
@@ -60,3 +32,8 @@ foreach (name ${TEST_NAMES})
     target_link_libraries(${name} PRIVATE pfs::uri::geo)
     add_test(NAME ${name} COMMAND ${name})
 endforeach()
+
+if (${_project_basename}_ENABLE_COVERAGE)
+    include(./coverage.cmake)
+    coverage_target("'/usr/*';'*/doctest.h'")
+endif()
