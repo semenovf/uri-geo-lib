@@ -92,10 +92,7 @@ matrix:
         packages: ['g++-7', 'ninja-build', 'lcov']
     after_success:
       - cmake --build . --target Coverage
-#      - lcov --capture --directory . --output-file coverage.info
-#      - lcov --remove coverage.info '/usr/*' '*/doctest.h' --output-file coverage.info
-#      - lcov --list coverage.info
-      - bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
+      - bash <(curl -s https://codecov.io/bash) -f Coverage.info || echo "Codecov did not collect coverage reports"
     env:
       - COMPILER=g++-7
       - CXX_STANDARD=11
