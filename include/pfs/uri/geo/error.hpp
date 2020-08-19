@@ -23,7 +23,7 @@ enum class errc
       success = 0
 
 // Parser errors
-    , unique_crs_requirement_broken
+    , unique_crs_requirement_broken = 1
     , unique_u_requirement_broken
     , unique_uncertainty_requirement_broken = unique_u_requirement_broken
     , u_out_of_order
@@ -42,7 +42,7 @@ public:
     {
         switch (ev) {
             case static_cast<int>(errc::success):
-                return std::string{"no error"};
+                return std::error_code{}.category().message(0);
             case static_cast<int>(errc::unique_crs_requirement_broken):
                 return std::string{"unique CRS requirement broken"};
             case static_cast<int>(errc::unique_u_requirement_broken):
@@ -50,7 +50,7 @@ public:
             case static_cast<int>(errc::u_out_of_order):
                 return std::string{"uncertainty is out of order"};
 
-            default: return std::string{"unknown JSON error"};
+            default: return std::string{"unknown Geo URI error"};
         }
     }
 };
@@ -63,12 +63,19 @@ inline std::error_category const & get_error_category ()
 
 inline std::error_code make_error_code (errc e)
 {
-    return std::error_code(static_cast<int>(e), get_error_category());
+    return e == errc::success
+        ? error_code{}
+        : std::error_code(static_cast<int>(e), get_error_category());
 }
 
 inline std::system_error make_exception (errc e)
 {
     return std::system_error(make_error_code(e));
+}
+
+inline std::system_error make_exception (std::error_code ec)
+{
+    return std::system_error(ec);
 }
 
 }}} // namespace pfs::uri::geo
