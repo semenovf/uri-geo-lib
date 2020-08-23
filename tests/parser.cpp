@@ -650,8 +650,7 @@ TEST_CASE("parsing failure") {
     }
 }
 
-// Tricks for coverity completion since this situations usually won't happen
-TEST_CASE("complete coverity") {
+TEST_CASE("misc") {
     // Is equivalent to std::error_code{}
     auto success = geo::make_error_code(geo::errc::success);
 
