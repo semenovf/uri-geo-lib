@@ -19,14 +19,14 @@
 #   include <strings.h>
 #endif
 
-int compare_ignore_case (std::string const & a, std::string const & b)
-{
-#if defined(_WIN32) || defined(_WIN64)
-    return _stricmp(a.c_str(), b.c_str());
-#else
-    return strcasecmp(a.c_str(), b.c_str());
-#endif
-}
+// int compare_ignore_case (std::string const & a, std::string const & b)
+// {
+// #if defined(_WIN32) || defined(_WIN64)
+//     return _stricmp(a.c_str(), b.c_str());
+// #else
+//     return strcasecmp(a.c_str(), b.c_str());
+// #endif
+// }
 
 namespace geo = pfs::uri::geo;
 
@@ -580,6 +580,32 @@ TEST_CASE("advance_geo_uri") {
     }
 }
 
+TEST_CASE("parsing") {
+    std::string good{R"(geo:66,30;u=6.500;FOo=this%2dthat;Bar)"};
+    std::wstring wgood{L"(geo:66,30;u=6.500;FOo=this%2dthat;Bar)"};
+
+    {
+        geo::uri uri;
+        auto ctx = geo::make_context(uri);
+        REQUIRE(geo::parse(good, ctx));
+        REQUIRE(ctx.ec == geo::error_code{});
+    }
+
+    {
+        std::error_code ec;
+        auto uri = geo::parse(good, ec);
+        REQUIRE(ec == geo::error_code{});
+    }
+
+    {
+        std::error_code ec;
+        auto uri = geo::parse(wgood, ec);
+        REQUIRE(ec == geo::error_code{});
+    }
+
+    REQUIRE_NOTHROW(geo::parse(good));
+}
+
 TEST_CASE("parsing failure") {
     // Unique uncertainty requirement broken
     {
@@ -587,6 +613,12 @@ TEST_CASE("parsing failure") {
         auto ctx = geo::make_context(uri);
         REQUIRE_FALSE(geo::parse(std::string{R"(geo:66,30;crs=ABC;crs=DEF)"}, ctx));
         REQUIRE(ctx.ec == geo::make_error_code(geo::errc::unique_crs_requirement_broken));
+    }
+
+    {
+        REQUIRE_THROWS_WITH_AS(geo::parse(std::string{R"(geo:66,30;crs=ABC;crs=DEF)"})
+            , "unique CRS requirement broken"
+            , std::system_error);
     }
 
     // Unique uncertainty requirement broken
@@ -597,6 +629,12 @@ TEST_CASE("parsing failure") {
         REQUIRE(ctx.ec == geo::make_error_code(geo::errc::unique_uncertainty_requirement_broken));
     }
 
+    {
+        REQUIRE_THROWS_WITH_AS(geo::parse(std::string{R"(geo:66,30;u=6.500;u=3.4)"})
+            , "unique uncertainty requirement broken"
+            , std::system_error);
+    }
+
     // Uncertainty is out of order
     {
         geo::uri uri;
@@ -604,4 +642,21 @@ TEST_CASE("parsing failure") {
         REQUIRE_FALSE(geo::parse(std::string{R"(geo:66,30;u=6.500;crs=ABC)"}, ctx));
         REQUIRE(ctx.ec == geo::make_error_code(geo::errc::uncertainty_out_of_order));
     }
+
+    {
+        REQUIRE_THROWS_WITH_AS(geo::parse(std::string{R"(geo:66,30;u=6.500;crs=ABC)"})
+            , "uncertainty is out of order"
+            , std::system_error);
+    }
+}
+
+TEST_CASE("misc") {
+    // Is equivalent to std::error_code{}
+    auto success = geo::make_error_code(geo::errc::success);
+
+    // category for geo::uri::errc (different from geo::errc::success)
+    // does not equal to std::error_code{}
+    CHECK_FALSE(geo::get_error_category().name() == success.category().name());
+    CHECK(geo::get_error_category().message(0) == success.category().message(0));
+    CHECK(geo::get_error_category().message(-1) == geo::get_error_category().message(-2));
 }

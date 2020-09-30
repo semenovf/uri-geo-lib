@@ -5,10 +5,11 @@
 [![Header Only](resources/badge/header-only.svg)](https://en.wikipedia.org/wiki/Header-only)
 [![Build Status](https://travis-ci.org/semenovf/pfs-uri-geo.svg?branch=master)](https://travis-ci.org/semenovf/pfs-uri-geo)
 [![Build status](https://ci.appveyor.com/api/projects/status/owogk328rraglcbp/branch/master?svg=true)](https://ci.appveyor.com/project/semenovf/pfs-uri-geo/branch/master)
+[![codecov](https://codecov.io/gh/semenovf/pfs-uri-geo/branch/master/graph/badge.svg)](https://codecov.io/gh/semenovf/pfs-uri-geo)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsemenovf%2Fpfs-uri-geo.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsemenovf%2Fpfs-uri-geo?ref=badge_shield)
 
 # pfs-uri-geo
-A Uniform Resource Identifier for Geographic Locations (RFC5870) parser implementation
+A Uniform Resource Identifier for Geographic Locations (RFC5870) parser/composer implementation
 
 ## Parsing
 
@@ -105,7 +106,7 @@ int main ()
     if (!geo::like_geo_uri(s))
         return EXIT_FAILURE;
 
-    geo::simple_api_interface<custom_context> ctx;
+    geo::parser_interface<custom_context> ctx;
     ctx.on_latitude  = [] (double && n) { cout << "Latitude: " << n << "\n"; };
     ctx.on_longitude = [] (double && n) { cout << "Longitude: " << n << "\n"; };
     ctx.on_altitude  = [] (double && n) { cout << "Altitude: " << n << "\n"; };

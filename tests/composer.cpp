@@ -31,3 +31,15 @@ TEST_CASE("composer") {
         CHECK(result == sample);
     }
 }
+
+TEST_CASE("poles") {
+    auto north_pole = geo::north_pole<geo::uri>();
+    auto south_pole = geo::south_pole<geo::uri>();
+
+    CHECK(geo::is_north_pole(north_pole));
+    CHECK(geo::is_south_pole(south_pole));
+
+    // No matter longitude for North and South poles
+    CHECK(geo::is_north_pole(geo::uri(double{90}, double{89})));
+    CHECK(geo::is_south_pole(geo::uri(double{-90}, double{89})));
+}

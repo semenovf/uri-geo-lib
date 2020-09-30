@@ -37,6 +37,8 @@ inline _StringType construct_string (std::initializer_list<char> const & il)
     return result;
 }
 
+struct wgs84_crs {};
+
 /**
  * Geo URI representation
  */
@@ -50,10 +52,25 @@ public:
     using string_type = _StringType;
     using parameters_type = _MapType<string_type, string_type>;
 
+    static constexpr number_type min_wgs84_latitude = number_type{-90};
+    static constexpr number_type max_wgs84_latitude = number_type{90};
+    static constexpr number_type min_wgs84_longitude = number_type{-180};
+    static constexpr number_type max_wgs84_longitude = number_type{180};
+
 private:
     number_type _latitude  {0};
     number_type _longitude {0};
+
+    /*
+     * 3.4.2.Component Description for WGS-84
+     * ...
+     * If the altitude of the location is unknown, <altitude> (and the comma
+     * before) MUST NOT be present in the URI.  Specifically, unknown
+     * altitude MUST NOT be represented by setting <altitude> to "0" (or any
+     * other arbitrary value).
+     */
     std::pair<number_type, bool> _altitude  {0, false};
+
     string_type _crslabel  {wgs84_string()};
     std::pair<number_type, bool> _uval {0, false}; // Location Uncertainty
     parameters_type _parameters;
@@ -65,8 +82,28 @@ private:
     }
 
 public:
+    basic_uri () = default;
+    basic_uri (basic_uri const &) = default;
+    basic_uri (basic_uri &&) = default;
+    basic_uri & operator = (basic_uri const &) = default;
+    basic_uri & operator = (basic_uri &&) = default;
+
+    basic_uri (number_type latitude, number_type longitude)
+    {
+        set_latitude(latitude);
+        set_longitude(longitude);
+    }
+
+    basic_uri (number_type latitude, number_type longitude, number_type altitude)
+    {
+        set_latitude(latitude);
+        set_longitude(longitude);
+        set_altitude(altitude);
+    }
+
     /**
-     * Latitude value
+     * Latitude value according to CRS (in range from -90 to 90 decimal degrees
+     * in the reference system WGS-84).
      */
     number_type latitude () const noexcept
     {
@@ -74,7 +111,8 @@ public:
     }
 
     /**
-     * Set latitude value to @a n.
+     * Set latitude value to @a n (must be in range from -90 to 90 decimal
+     * degrees in the reference system WGS-84).
      */
     void set_latitude (number_type const & n) noexcept
     {
@@ -82,7 +120,8 @@ public:
     }
 
     /**
-     * Longitude value
+     * Longitude value according to CRS (in range from -180 to 180 decimal degrees
+     * in the reference system WGS-84).
      */
     number_type longitude () const noexcept
     {
@@ -90,7 +129,8 @@ public:
     }
 
     /**
-     * Set longitude value to @a n.
+     * Set longitude value to @a n (must be in range from -180 to 180 decimal
+     * degrees in the reference system WGS-84).
      */
     void set_longitude (number_type const & n) noexcept
     {
@@ -98,7 +138,7 @@ public:
     }
 
     /**
-     * Altitude value
+     * Altitude value (in meters)
      */
     number_type altitude () const noexcept
     {
@@ -106,7 +146,7 @@ public:
     }
 
     /**
-     * Set altitude value to @a n.
+     * Set altitude value to @a n (in meters).
      */
     void set_altitude (number_type const & n) noexcept
     {
@@ -219,7 +259,7 @@ public:
     }
 
     template <typename _BinaryOp>
-    void foreach_parameter (_BinaryOp f) const
+    void foreach_parameter (_BinaryOp && f) const
     {
         for (auto it = _parameters.begin(), last = _parameters.end()
                 ; it != last; ++it)
@@ -227,7 +267,7 @@ public:
     }
 
     template <typename _BinaryOp>
-    void foreach_mutable_parameter (_BinaryOp f)
+    void foreach_mutable_parameter (_BinaryOp && f)
     {
         for (auto it = _parameters.begin(), last = _parameters.end()
                 ; it != last; ++it)
@@ -237,5 +277,55 @@ public:
 
 using uri = basic_uri<double, std::string>;
 using wuri = basic_uri<double, std::wstring>;
+
+/*
+ * 3.4.2. Component Description for WGS-84
+ * ...
+ * The <longitude> of coordinate values reflecting the poles (<latitude>
+ * set to -90 or 90 degrees) SHOULD be set to "0", although consumers of
+ * 'geo' URIs MUST accept such URIs with any longitude value from -180
+ * to 180.
+ */
+/**
+ * Constructs North Pole URI in the reference system WGS-84.
+ */
+template <typename _UriType>
+inline _UriType north_pole ()
+{
+    using number_type = typename _UriType::number_type;
+
+    // By default CRS is WGS-84
+    return _UriType{_UriType::max_wgs84_latitude, number_type{0}};
+}
+
+/**
+ * Constructs South Pole URI in the reference system WGS-84.
+ */
+template <typename _UriType>
+inline _UriType south_pole ()
+{
+    using number_type = typename _UriType::number_type;
+
+    // By default CRS is WGS-84
+    return _UriType{_UriType::min_wgs84_latitude, number_type{0}};
+}
+
+/**
+ * Checks if URI @a uri represents North Pole URI in the reference system WGS-84.
+ */
+template <typename _UriType>
+inline bool is_north_pole (_UriType const & uri)
+{
+    return uri.is_wgs84() && uri.latitude() == _UriType::max_wgs84_latitude;
+}
+
+/**
+ * Checks if URI @a uri represents North Pole URI in the reference system WGS-84.
+ */
+template <typename _UriType>
+inline bool is_south_pole (_UriType const & uri)
+{
+    return uri.is_wgs84() && uri.latitude() == _UriType::min_wgs84_latitude;
+}
 
 }}} // namespace pfs::uri::geo

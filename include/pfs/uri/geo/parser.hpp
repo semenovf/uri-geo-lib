@@ -933,6 +933,52 @@ bool advance_geo_uri (_ForwardIterator & pos, _ForwardIterator last
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// make_context
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * Makes a context for parsing.
+ *
+ * @param uri Geo URI to store parsed data.
+ * @param policy Parsing policy.
+ */
+template <typename _GeoUriType>
+parser_interface<_GeoUriType> make_context (_GeoUriType & uri
+    , parse_policy_set const & policy = strict_policy())
+{
+    using number_type = typename _GeoUriType::number_type;
+    using string_type = typename _GeoUriType::string_type;
+
+    parser_interface<_GeoUriType> ctx;
+    ctx.policy = policy;
+
+    ctx.on_latitude = [& uri] (number_type && n) {
+        uri.set_latitude(n);
+    };
+
+    ctx.on_longitude = [& uri] (number_type && n) {
+        uri.set_longitude(n);
+    };
+
+    ctx.on_altitude = [& uri] (number_type && n) {
+        uri.set_altitude(n);
+    };
+
+    ctx.on_crslabel = [& uri] (string_type && s) {
+        uri.set_crs(std::forward<string_type>(s));
+    };
+
+    ctx.on_uval = [& uri] (number_type && n) {
+        uri.set_uncertainty(n);
+    };
+
+    ctx.on_parameter = [& uri] (string_type && key, string_type && value) {
+        uri.insert(std::forward<string_type>(key), std::forward<string_type>(value));
+    };
+
+    return ctx;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // parse
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -977,49 +1023,55 @@ inline bool parse (typename parser_interface<_UserContext>::string_type const & 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// make_context
+// parse
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * Makes a context for parsing.
+ * Parses string for Geo URI according to RFC-5870.
  *
- * @param uri Geo URI to store parsed data.
- * @param policy Parsing policy.
+ * @param s[in] String represented Geo URI.
+ * @param ec[out] Error code to store parse result.
+ *
+ * @return @c basic_uri<double, _StringType> instance.
  */
-template <typename _GeoUriType>
-parser_interface<_GeoUriType> make_context (_GeoUriType & uri
-    , parse_policy_set const & policy = strict_policy())
+template <typename _StringType>
+inline basic_uri<double, _StringType> parse (_StringType const & s, std::error_code & ec)
 {
-    using number_type = typename _GeoUriType::number_type;
-    using string_type = typename _GeoUriType::string_type;
+    using uri_type = basic_uri<double, _StringType>;
 
-    parser_interface<_GeoUriType> ctx;
-    ctx.policy = policy;
+    uri_type result;
+    auto ctx = make_context(result);
+    auto rc = geo::parse(s, ctx);
 
-    ctx.on_latitude = [& uri] (number_type && n) {
-        uri.set_latitude(n);
-    };
+    if (! rc) {
+        ec = ctx.ec;
+        return uri_type{};
+    }
 
-    ctx.on_longitude = [& uri] (number_type && n) {
-        uri.set_longitude(n);
-    };
+    return result;
+}
 
-    ctx.on_altitude = [& uri] (number_type && n) {
-        uri.set_altitude(n);
-    };
+////////////////////////////////////////////////////////////////////////////////
+// parse
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * Parses string for Geo URI according to RFC-5870.
+ *
+ * @param s[in] String represented Geo URI.
+ * @param ec[out] Error code to store parse result.
+ *
+ * @return @c basic_uri<double, _StringType> instance.
+ */
+template <typename _StringType>
+inline basic_uri<double, _StringType> parse (_StringType const & s)
+{
+    std::error_code ec;
+    auto result = parse(s, ec);
 
-    ctx.on_crslabel = [& uri] (string_type && s) {
-        uri.set_crs(std::forward<string_type>(s));
-    };
+    if (ec) {
+        throw make_exception(ec);
+    }
 
-    ctx.on_uval = [& uri] (number_type && n) {
-        uri.set_uncertainty(n);
-    };
-
-    ctx.on_parameter = [& uri] (string_type && key, string_type && value) {
-        uri.insert(std::forward<string_type>(key), std::forward<string_type>(value));
-    };
-
-    return ctx;
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
